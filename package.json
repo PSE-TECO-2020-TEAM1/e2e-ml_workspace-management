@@ -1,0 +1,25 @@
+{
+  "name": "workspace-management",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "build-run": "tsc;node dist/app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PSE-TECO-2020-TEAM1/workspace-management.git"
+  },
+  "keywords": [
+    "workspace",
+    "management"
+  ],
+  "author": "Murat Kurnaz",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/PSE-TECO-2020-TEAM1/workspace-management/issues"
+  },
+  "homepage": "https://github.com/PSE-TECO-2020-TEAM1/workspace-management#readme"
+}
