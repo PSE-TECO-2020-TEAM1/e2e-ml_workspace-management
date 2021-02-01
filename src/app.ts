@@ -3,6 +3,7 @@ import dotenv from "dotenv"
 import mongoose from "mongoose"
 import * as workspaceController from "./controllers/workspaceController"
 
+
 dotenv.config();
 
 mongoose.connect(`mongodb+srv://${process.env.DATABASE_USER}:${process.env.DATABASE_PASS}@${process.env.DATABASE_IP}/${process.env.DATABASE}?retryWrites=true&w=majority`,
@@ -20,6 +21,10 @@ mongoose.connection.once('open', function() {
 const app = express();
 
 app.use(express.json());
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.log(reason);
+})
 
 app.listen(process.env.PORT, () => {
     console.log("Server started");

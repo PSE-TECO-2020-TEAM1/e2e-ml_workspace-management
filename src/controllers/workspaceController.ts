@@ -38,7 +38,7 @@ export const postCreateWorkspace = async (req: Request, res: Response) => {
 
 interface CreateWorkspaceRequestBody {
     name: string,
-    userId: number,
+    userId: string,
     sensors: {
         sensorName: string,
         samplingRate: number
