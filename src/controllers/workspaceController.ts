@@ -1,11 +1,11 @@
 import { Request, response, Response } from "express"
 import { ObjectId } from "mongoose"
 import Workspace from "../models/workspace"
-import Sensor, { SensorType } from "../models/sensor"
+import Sensor, { ACCELEROMETER, GYROSCOPE, MAGNETOMETER, SensorType } from "../models/sensor"
 
 export const getWorkspaces = async (req: Request, res: Response) => {
-    // const IDs = Workspace.find().exec();
-    // const names = Workspace.find().exec();
+    const IDs = Workspace.find().exec();
+    const names = Workspace.find().exec();
     // const responseJson: GetWorkspacesResponseBody = {IDs, names};
     // res.status(200).json(responseJson);
 }
@@ -17,30 +17,30 @@ interface GetWorkspacesResponseBody {
 
 export const postCreateWorkspace = async (req: Request, res: Response) => {
     const body: CreateWorkspaceRequestBody = req.body;
+    // do i need to check if such an user exists and how ?
     // const user = await Workspace.findOne({userId: body.userId}).exec();
     // if(!user) {
         // return res.status(400).send("");
     // }
     let sensors = [];
     for (const sensor of body.sensors) {
-        let sensorType;
-        switch (sensor.name) {
-            case "Accelerometer": sensorType = SensorType.ACCELEROMETER;
-            case "Gyroscope": sensorType = SensorType.GYROSCOPE;
-            case "Magnetometer": sensorType = SensorType.MAGNETOMETER;
+        let sensorType : SensorType;
+        switch (sensor.sensorName) {
+            case "Accelerometer": sensorType = ACCELEROMETER; break;
+            case "Gyroscope": sensorType = GYROSCOPE; break;
+            case "Magnetometer": sensorType = MAGNETOMETER; break;
         }
         sensors.push({sensorType:sensorType, samplingRate:sensor.samplingRate});
     }
-
-    Workspace.create({name: body.workspaceName, userId:body.userId, sensors: sensors});
-    res.sendStatus(200);
+    const workspace = await Workspace.create({name: body.name, userId:body.userId, sensors: sensors});
+    res.status(200).json(workspace._id);
 }
 
 interface CreateWorkspaceRequestBody {
-    workspaceName: string,
+    name: string,
     userId: number,
     sensors: {
-        name: string,
+        sensorName: string,
         samplingRate: number
     }[]
 }

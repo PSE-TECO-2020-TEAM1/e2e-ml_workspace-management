@@ -1,18 +1,46 @@
 import mongoose from "mongoose"
 
-export class SensorType {
-    static readonly ACCELEROMETER = new SensorType(50, 25, ['x', 'y', 'z']);
-    static readonly GYROSCOPE = new SensorType(100, 70, ['x', 'y', 'z']);
-    static readonly MAGNETOMETER = new SensorType(250, 250, ['x', 'y', 'z']);
+export interface SensorType {
+    maxSamplingRate: number,
+    defaultSamplingRate: number,
+    dataFormat: readonly string[]
+};
 
-    // private to disallow creating other instances of this type
-    private constructor(
-        public readonly maxSamplingRate: number,
-        public readonly defaultSamplingRate: number,
-        public readonly dataFormat: string[]
-        ) {}
+export const SensorTypeSchema: Record<keyof SensorType, any> = {
+    maxSamplingRate: {
+        type: Number,
+        required: true,
+        unique: false
+    },
+    defaultSamplingRate: {
+        type: Number,
+        required: true,
+        unique: false
+    },
+    dataFormat: {
+        type: [String],
+        required: true,
+        unique: false
+    }
 }
 
+export const ACCELEROMETER: SensorType = {
+    maxSamplingRate: 50,
+    defaultSamplingRate: 25,
+    dataFormat: ['x','y','z']
+} as const
+
+export const GYROSCOPE: SensorType = {
+    maxSamplingRate: 100,
+    defaultSamplingRate: 70,
+    dataFormat: ['x','y','z']
+} as const
+
+export const MAGNETOMETER: SensorType = {
+    maxSamplingRate: 250,
+    defaultSamplingRate: 250,
+    dataFormat: ['x','y','z']
+} as const
 interface ISensor extends mongoose.Document {
     sensorType: SensorType,
     samplingRate: number
@@ -20,7 +48,7 @@ interface ISensor extends mongoose.Document {
 
 const SensorSchema = new mongoose.Schema({
     sensorType: {
-        type: SensorType,
+        type: SensorTypeSchema,
         required: true,
         unique: false
     },
