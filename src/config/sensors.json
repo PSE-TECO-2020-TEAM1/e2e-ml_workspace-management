@@ -1,0 +1,9 @@
+{
+    "maxSamplingRate": 8192,
+    "defaultSamplingRate": 64,
+    "dataFormat": {
+        "x": 5,
+        "y": 5,
+        "z": 5
+    }
+}

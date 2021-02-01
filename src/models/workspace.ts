@@ -1,34 +1,40 @@
 import mongoose from "mongoose"
+import { SensorType } from "./sensor";
 
 interface IWorkspace extends mongoose.Document {
-    id: mongoose.Types.ObjectId,
     name: string,
-    user: string,
-    submissionIDs: string[]
+    userId: number,
+    submissionIDs: string[],
+    sensors: {
+        sensorType: SensorType,
+        samplingRate: number
+    }[]
 }
 
 const WorkspaceSchema = new mongoose.Schema({
-    id: {
-        type: mongoose.Types.ObjectId,
-        required: true,
-        unique: true
-    },
     name: {
         type: String,
         required: true,
         unique: false
     },
-    user: {
-        type: String,
+    userId: {
+        type: Number, 
         required: true,
         unique: true
     },
     submissionIDs: {
         type: [String],
+        required: false,
+        unique: false
+    },
+    sensors: {
+        type: [{
+            sensorType: SensorType,
+            samplingRate: Number
+        }],
         required: true,
         unique: false
     }
-
 });
 
 export default mongoose.model<IWorkspace>("Workspace", WorkspaceSchema);
