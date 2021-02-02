@@ -1,14 +1,11 @@
 import mongoose from "mongoose"
-import { SensorType, SensorTypeSchema } from "./sensor";
+import { ISensor, SensorTypeSchema } from "./sensor";
 
 interface IWorkspace extends mongoose.Document {
     name: string,
     userId: string,
     submissionIDs: string[],
-    sensors: {
-        sensorType: SensorType,
-        samplingRate: number
-    }[]
+    sensors: ISensor[]
 }
 
 const WorkspaceSchema = new mongoose.Schema({

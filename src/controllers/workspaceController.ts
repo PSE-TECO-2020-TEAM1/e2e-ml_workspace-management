@@ -1,4 +1,4 @@
-import { Request, response, Response } from "express"
+import { Request, Response } from "express"
 import Workspace from "../models/workspace"
 import Sensor, { ACCELEROMETER, GYROSCOPE, MAGNETOMETER, SensorType } from "../models/sensor"
 import mongoose from "mongoose"
@@ -68,16 +68,38 @@ export const putRenameWorkspace = async (req : Request, res : Response) => {
     res.sendStatus(200);
 }
 
-// duplicate code with renameWorkspace, need middleware?
 export const deleteWorkspace = async (req : Request, res: Response) => {
     const workspaceId = req.params.workspaceId as string;
-    if (!mongoose.Types.ObjectId.isValid(workspaceId)) {
-        return res.status(400).send("Invalid workspace id");
-    }
     const workspace = await Workspace.findById(workspaceId).exec();
     if (!workspace) {
         return res.status(400).send("Workspace with given id does not exist");
     }
     await workspace.remove();
     res.sendStatus(200);
+}
+
+interface GetWorkspaceSensorsResponseBody {
+    [ index: number ]: {
+        id: string,
+        name: string,
+        dataFormat: readonly string[],
+        samplingRate: number
+    }
+}
+
+export const getWorkspaceSensors = async (req : Request, res: Response) => {
+    const workspaceId = req.params.workspaceId as string;
+    const workspace = await Workspace.findById(workspaceId).exec();
+    if (!workspace) {
+        return res.status(400).send("Workspace with given id does not exist");
+    }
+    const formattedSensors : GetWorkspaceSensorsResponseBody = workspace.sensors.map(s => (
+        {
+            id: s._id,
+            name: s.sensorType.name,
+            dataFormat: s.sensorType.dataFormat,
+            samplingRate: s.samplingRate        
+        }
+    ));
+    res.status(200).json(formattedSensors);
 }
