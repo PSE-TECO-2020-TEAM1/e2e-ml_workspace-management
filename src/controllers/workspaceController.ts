@@ -67,3 +67,17 @@ export const putRenameWorkspace = async (req : Request, res : Response) => {
     await workspace.save();
     res.sendStatus(200);
 }
+
+// duplicate code with renameWorkspace, need middleware?
+export const deleteWorkspace = async (req : Request, res: Response) => {
+    const workspaceId = req.params.workspaceId as string;
+    if (!mongoose.Types.ObjectId.isValid(workspaceId)) {
+        return res.status(400).send("Invalid workspace id");
+    }
+    const workspace = await Workspace.findById(workspaceId).exec();
+    if (!workspace) {
+        return res.status(400).send("Workspace with given id does not exist");
+    }
+    await workspace.remove();
+    res.sendStatus(200);
+}

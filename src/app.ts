@@ -33,3 +33,4 @@ app.listen(process.env.PORT, () => {
 app.get("/api/workspaces", workspaceController.getWorkspaces);
 app.post("/api/workspaces/create", workspaceController.postCreateWorkspace);
 app.put("/api/workspaces/:workspaceId", workspaceController.putRenameWorkspace);
+app.delete("/api/workspaces/:workspaceId", workspaceController.deleteWorkspace);
