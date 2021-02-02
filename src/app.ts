@@ -30,4 +30,5 @@ app.listen(process.env.PORT, () => {
     console.log("Server started");
 });
 
+app.get("/api/workspaces", workspaceController.getWorkspaces);
 app.post("/api/workspaces/create", workspaceController.postCreateWorkspace);

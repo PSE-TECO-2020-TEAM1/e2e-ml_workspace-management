@@ -1,18 +1,25 @@
 import { Request, response, Response } from "express"
-import { ObjectId } from "mongoose"
 import Workspace from "../models/workspace"
 import Sensor, { ACCELEROMETER, GYROSCOPE, MAGNETOMETER, SensorType } from "../models/sensor"
 
 export const getWorkspaces = async (req: Request, res: Response) => {
-    const IDs = Workspace.find().exec();
-    const names = Workspace.find().exec();
-    // const responseJson: GetWorkspacesResponseBody = {IDs, names};
-    // res.status(200).json(responseJson);
+    const userId = req.query.userId as string; // this line might cause problems later ?
+    const workspaces = await Workspace.find({userId: userId}).exec();
+    const formattedWorkspaces : GetWorkspacesResponseBody = workspaces.map(w => (
+        {
+            id: w._id,
+            name: w.name
+        }
+    ));
+    res.status(200).json(formattedWorkspaces);
 }
 
+// needed or unnecessary ?
 interface GetWorkspacesResponseBody {
-    IDs: [ObjectId],
-    names: [string]
+    [index: number ]: {
+        id: string,
+        name: string
+    }
 }
 
 export const postCreateWorkspace = async (req: Request, res: Response) => {
