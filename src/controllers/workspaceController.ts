@@ -2,6 +2,14 @@ import { Request, response, Response } from "express"
 import Workspace from "../models/workspace"
 import Sensor, { ACCELEROMETER, GYROSCOPE, MAGNETOMETER, SensorType } from "../models/sensor"
 
+// needed or unnecessary ?
+interface GetWorkspacesResponseBody {
+    [ index: number ]: {
+        id: string,
+        name: string
+    }
+}
+
 export const getWorkspaces = async (req: Request, res: Response) => {
     const userId = req.query.userId as string; // this line might cause problems later ?
     const workspaces = await Workspace.find({userId: userId}).exec();
@@ -13,13 +21,13 @@ export const getWorkspaces = async (req: Request, res: Response) => {
     ));
     res.status(200).json(formattedWorkspaces);
 }
-
-// needed or unnecessary ?
-interface GetWorkspacesResponseBody {
-    [index: number ]: {
-        id: string,
-        name: string
-    }
+interface CreateWorkspaceRequestBody {
+    name: string,
+    userId: string,
+    sensors: {
+        sensorName: string,
+        samplingRate: number
+    }[]
 }
 
 export const postCreateWorkspace = async (req: Request, res: Response) => {
@@ -41,13 +49,4 @@ export const postCreateWorkspace = async (req: Request, res: Response) => {
     }
     const workspace = await Workspace.create({name: body.name, userId:body.userId, sensors: sensors});
     res.status(200).json(workspace._id);
-}
-
-interface CreateWorkspaceRequestBody {
-    name: string,
-    userId: string,
-    sensors: {
-        sensorName: string,
-        samplingRate: number
-    }[]
 }
