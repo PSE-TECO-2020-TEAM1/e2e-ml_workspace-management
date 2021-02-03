@@ -1,11 +1,12 @@
 import mongoose from "mongoose"
-import { ISensor, SensorTypeSchema } from "./sensor";
-
-interface IWorkspace extends mongoose.Document {
+import { ISensor, SensorSchema } from "./sensor";
+import { ILabel, LabelSchema } from "./label";
+export interface IWorkspace extends mongoose.Document {
     name: string,
     userId: string,
     submissionIDs: string[],
-    sensors: ISensor[]
+    sensors: ISensor[],
+    // labels: ILabel[]
 }
 
 const WorkspaceSchema = new mongoose.Schema({
@@ -25,13 +26,15 @@ const WorkspaceSchema = new mongoose.Schema({
         unique: false
     },
     sensors: {
-        type: [{
-            sensorType: SensorTypeSchema,
-            samplingRate: Number
-        }],
+        type: [SensorSchema],
         required: true,
         unique: false
-    }
+    },
+    // labels: {
+    //     type: [LabelSchema],
+    //     required: false,
+    //     unique: false
+    // }
 });
 
 export default mongoose.model<IWorkspace>("Workspace", WorkspaceSchema);

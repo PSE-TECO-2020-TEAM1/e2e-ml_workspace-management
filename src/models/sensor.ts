@@ -55,7 +55,7 @@ export interface ISensor extends mongoose.Document {
     samplingRate: number
 }
 
-const SensorSchema = new mongoose.Schema({
+export const SensorSchema = new mongoose.Schema({
     sensorType: {
         type: SensorTypeSchema,
         required: true,

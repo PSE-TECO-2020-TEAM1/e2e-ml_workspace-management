@@ -1,7 +1,6 @@
 import { Request, Response } from "express"
-import Workspace from "../models/workspace"
-import Sensor, { ACCELEROMETER, GYROSCOPE, MAGNETOMETER, SensorType } from "../models/sensor"
-import mongoose from "mongoose"
+import Workspace, { IWorkspace } from "../models/workspace"
+import { ACCELEROMETER, GYROSCOPE, MAGNETOMETER, SensorType } from "../models/sensor"
 
 // needed or unnecessary ?
 interface GetWorkspacesResponseBody {
@@ -54,26 +53,15 @@ export const postCreateWorkspace = async (req: Request, res: Response) => {
 
 // does not handle the case where workspaceName is not provided
 export const putRenameWorkspace = async (req : Request, res : Response) => {
-    const workspaceId = req.params.workspaceId as string; 
     const workspaceName = req.query.workspaceName as string;
-    if (!mongoose.Types.ObjectId.isValid(workspaceId)) {
-        return res.status(400).send("Invalid workspace id");
-    }
-    const workspace = await Workspace.findById(workspaceId).exec();
-    if (!workspace) {
-        return res.status(400).send("Workspace with given id does not exist");
-    }
+    const workspace = res.locals.workspace as IWorkspace;
     workspace.name = workspaceName;
     await workspace.save();
     res.sendStatus(200);
 }
 
 export const deleteWorkspace = async (req : Request, res: Response) => {
-    const workspaceId = req.params.workspaceId as string;
-    const workspace = await Workspace.findById(workspaceId).exec();
-    if (!workspace) {
-        return res.status(400).send("Workspace with given id does not exist");
-    }
+    const workspace = res.locals.workspace as IWorkspace;
     await workspace.remove();
     res.sendStatus(200);
 }
@@ -88,11 +76,7 @@ interface GetWorkspaceSensorsResponseBody {
 }
 
 export const getWorkspaceSensors = async (req : Request, res: Response) => {
-    const workspaceId = req.params.workspaceId as string;
-    const workspace = await Workspace.findById(workspaceId).exec();
-    if (!workspace) {
-        return res.status(400).send("Workspace with given id does not exist");
-    }
+    const workspace = res.locals.workspace as IWorkspace;
     const formattedSensors : GetWorkspaceSensorsResponseBody = workspace.sensors.map(s => (
         {
             id: s._id,
