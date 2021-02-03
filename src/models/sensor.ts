@@ -68,4 +68,4 @@ export const SensorSchema = new mongoose.Schema({
     }
 });
 
-export default mongoose.model<ISensor>("Sensor", SensorSchema);
+// export default mongoose.model<ISensor>("Sensor", SensorSchema);

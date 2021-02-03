@@ -6,7 +6,7 @@ export interface IWorkspace extends mongoose.Document {
     userId: string,
     submissionIDs: string[],
     sensors: ISensor[],
-    // labels: ILabel[]
+    labels: ILabel[]
 }
 
 const WorkspaceSchema = new mongoose.Schema({
@@ -30,11 +30,11 @@ const WorkspaceSchema = new mongoose.Schema({
         required: true,
         unique: false
     },
-    // labels: {
-    //     type: [LabelSchema],
-    //     required: false,
-    //     unique: false
-    // }
+    labels: {
+        type: [LabelSchema],
+        required: false,
+        unique: false
+    }
 });
 
 export default mongoose.model<IWorkspace>("Workspace", WorkspaceSchema);

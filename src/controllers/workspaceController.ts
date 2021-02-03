@@ -82,7 +82,7 @@ export const getWorkspaceSensors = async (req : Request, res: Response) => {
             id: s._id,
             name: s.sensorType.name,
             dataFormat: s.sensorType.dataFormat,
-            samplingRate: s.samplingRate        
+            samplingRate: s.samplingRate
         }
     ));
     res.status(200).json(formattedSensors);
