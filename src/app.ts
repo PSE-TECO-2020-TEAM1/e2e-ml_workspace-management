@@ -33,7 +33,7 @@ process.on('unhandledRejection', (reason, promise) => {
     console.log(reason);
 })
 
-app.listen(process.env.PORT, () => {
+const server = app.listen(process.env.PORT, () => {
     console.log("Server started");
 });
 
@@ -45,3 +45,5 @@ app.use("/api/workspaces/:workspaceId", workspaceIdValidator);
 app.put("/api/workspaces/:workspaceId", workspaceController.putRenameWorkspace);
 app.delete("/api/workspaces/:workspaceId", workspaceController.deleteWorkspace);
 app.get("/api/workspaces/:workspaceId/sensors", workspaceController.getWorkspaceSensors);
+
+module.exports = server;
