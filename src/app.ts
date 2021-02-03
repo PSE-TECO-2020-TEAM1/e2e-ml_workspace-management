@@ -21,9 +21,9 @@ const app = express();
 const router = require("./routers/router");
 app.use(express.json());
 
-process.on('unhandledRejection', (reason, promise) => {
-    console.log(reason);
-})
+process.on("unhandledRejection", (reason, promise) => {
+	console.log(reason);
+});
 
 const server = app.listen(process.env.PORT, () => {
     console.log("Server started");
