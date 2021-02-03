@@ -43,15 +43,21 @@ describe('Testing API Endpoints', () => {
     });
     
 
-    describe('Create workspace', () => {
-        it('Created workspace 1', (done) => {
-            request.post('/api/workspaces/create')
-                    .send(workspace1)
-                    .expect(200)
-                    .end((err, res) => {
-                        expect(res.body).to.be.a('string');
-                        done(err);
-                    });
+    describe('Get workspaces', () => {
+        it('Returns workspaces', (done) => {
+            request.get("/api/workspaces").expect(200).end((err, res) => {
+                expect(res.body).to.be.an("array");
+                done();
+            });
         });
     });
+
+    // describe('Create a new workspace'), () => {
+    //     it('Created workspace1', (done) => {
+    //         request.post("/api/workspaces/create").send(workspace1).expect(200).end((err, res) => {
+    //             expect(res.body).to.be.a("string");
+    //             done();
+    //         });
+    //     });
+    // }
 });
