@@ -1,8 +1,8 @@
 import { Request, Response } from "express"
-import Workspace, { IWorkspace } from "../models/workspace"
+import Workspace, { ISubmissionId, IWorkspace } from "../models/workspace"
 import { ACCELEROMETER, GYROSCOPE, MAGNETOMETER, SensorType } from "../models/sensor"
+import crypto from "crypto";
 
-// needed or unnecessary ?
 interface GetWorkspacesResponseBody {
     [ index: number ]: {
         id: string,
@@ -86,4 +86,16 @@ export const getWorkspaceSensors = async (req : Request, res: Response) => {
         }
     ));
     res.status(200).json(formattedSensors);
+}
+
+
+// TODO: sways from API doc, in API doc get /submissionId
+export const getGenerateSubmissionId = async (req: Request, res: Response) => {
+    const workspace = res.locals.workspace as IWorkspace;
+    const submissionId = {
+        hash: crypto.randomBytes(16).toString("hex")
+    } as ISubmissionId;
+    workspace.submissionIds.push(submissionId);
+    workspace.save(); // maybe await here
+    res.status(200).send(submissionId.hash);
 }

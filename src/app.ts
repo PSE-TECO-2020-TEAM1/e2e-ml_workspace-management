@@ -47,6 +47,7 @@ app.delete("/api/workspaces/:workspaceId", workspaceController.deleteWorkspace);
 app.get("/api/workspaces/:workspaceId/sensors", workspaceController.getWorkspaceSensors);
 app.get("/api/workspaces/:workspaceId/labels", labelController.getLabels);
 app.post("/api/workspaces/:workspaceId/labels/create", labelController.postCreateLabel);
+app.get("/api/workspaces/:workspaceId/generateSubmissionId", workspaceController.getGenerateSubmissionId);
 
 app.use("/api/workspaces/:workspaceId/labels/:labelId", labelIdValidator);
 app.use("/api/workspaces/:workspaceId/labels/:labelId", labelFinder);

@@ -1,13 +1,28 @@
 import mongoose from "mongoose"
 import { ISensor, SensorSchema } from "./sensor";
 import { ILabel, LabelSchema } from "./label";
+import { ISample, SampleSchema } from "./sample";
+
+// provides flexibility, expiration date etc. can be added later
+export interface ISubmissionId extends mongoose.Document {
+    hash: string
+}
 export interface IWorkspace extends mongoose.Document {
     name: string,
     userId: string,
-    submissionIDs: string[],
+    submissionIds: ISubmissionId[],
     sensors: ISensor[],
-    labels: ILabel[]
+    labels: ILabel[],
+    sample: ISample,
 }
+
+const SubmissionIdSchema = new mongoose.Schema({
+    hash: {
+        type: String,
+        required: true,
+        unique: true
+    }
+});
 
 const WorkspaceSchema = new mongoose.Schema({
     name: {
@@ -20,8 +35,8 @@ const WorkspaceSchema = new mongoose.Schema({
         required: true,
         unique: false
     },
-    submissionIDs: {
-        type: [String],
+    submissionIds: {
+        type: [SubmissionIdSchema],
         required: false,
         unique: false
     },
@@ -32,6 +47,11 @@ const WorkspaceSchema = new mongoose.Schema({
     },
     labels: {
         type: [LabelSchema],
+        required: false,
+        unique: false
+    },
+    samples: {
+        type: [SampleSchema],
         required: false,
         unique: false
     }
