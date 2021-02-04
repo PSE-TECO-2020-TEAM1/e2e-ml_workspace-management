@@ -47,3 +47,15 @@ export const putRenameLabel = async (req: Request, res: Response) => {
     workspace.save();
     res.sendStatus(200);
 }
+
+export const putDescribeLabel = async (req: Request, res: Response) => {
+    const workspace = res.locals.workspace as IWorkspace;
+    const label = res.locals.label as ILabel;
+    const description = req.query.description as string;
+    if (!description || description === '' /* || description.length > MAX_LENGTH */) {
+        return res.status(400).send("Description is invalid");
+    }
+    label.description = description;
+    workspace.save();
+    res.sendStatus(200);
+}

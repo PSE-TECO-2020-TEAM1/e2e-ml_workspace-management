@@ -52,5 +52,6 @@ app.use("/api/workspaces/:workspaceId/labels/:labelId", labelIdValidator);
 app.use("/api/workspaces/:workspaceId/labels/:labelId", labelFinder);
 
 app.put("/api/workspaces/:workspaceId/labels/:labelId/rename", labelController.putRenameLabel);
+app.put("/api/workspaces/:workspaceId/labels/:labelId/describe", labelController.putDescribeLabel);
 
 module.exports = server;
