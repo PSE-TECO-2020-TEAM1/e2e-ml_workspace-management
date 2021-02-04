@@ -5,6 +5,8 @@ import * as workspaceController from "./controllers/workspaceController"
 import * as labelController from "./controllers/labelController";
 import { workspaceIdValidator } from "./middlewares/workspaceIdValidator";
 import { workspaceFinder } from "./middlewares/workspaceFinder";
+import { labelIdValidator } from "./middlewares/labelIdValidator";
+import { labelFinder } from "./middlewares/labelFinder";
 
 dotenv.config();
 
@@ -19,7 +21,7 @@ mongoose.connection.on('error', console.error.bind(console, 'Connection error:')
 mongoose.connection.once('open', function() {
     console.log("Database connection established");
     // remove after development
-    mongoose.connection.db.dropDatabase();
+    // mongoose.connection.db.dropDatabase();
 });
 
 const app = express();
@@ -45,5 +47,10 @@ app.delete("/api/workspaces/:workspaceId", workspaceController.deleteWorkspace);
 app.get("/api/workspaces/:workspaceId/sensors", workspaceController.getWorkspaceSensors);
 app.get("/api/workspaces/:workspaceId/labels", labelController.getLabels);
 app.post("/api/workspaces/:workspaceId/labels/create", labelController.postCreateLabel);
+
+app.use("/api/workspaces/:workspaceId/labels/:labelId", labelIdValidator);
+app.use("/api/workspaces/:workspaceId/labels/:labelId", labelFinder);
+
+app.put("/api/workspaces/:workspaceId/labels/:labelId/rename", labelController.putRenameLabel);
 
 module.exports = server;

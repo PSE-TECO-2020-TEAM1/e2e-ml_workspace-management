@@ -1,4 +1,4 @@
-import { Request, Response } from "express"
+import { request, Request, Response } from "express"
 import { ILabel } from "../models/label";
 import { IWorkspace } from "../models/workspace";
 
@@ -9,7 +9,7 @@ interface GetLabelsRequestBody {
         description: string
     }
 }
-
+// labels as GetLabelsRequestBody 
 export const getLabels = async (req: Request, res: Response) => {
     const workspace = res.locals.workspace as IWorkspace;
     const labels = workspace.labels.map(l => ({
@@ -27,6 +27,23 @@ export const postCreateLabel = async (req: Request, res: Response) => {
         description: null as string
     } as ILabel;
     workspace.labels.push(newLabel);
+    workspace.save();
+    res.sendStatus(200);
+}
+
+// TODO after sample part complete
+// export const deleteLabel = async (req: Request, res: Response) => {
+// 
+// }
+
+export const putRenameLabel = async (req: Request, res: Response) => {
+    const workspace = res.locals.workspace as IWorkspace;
+    const label = res.locals.label as ILabel;
+    const newName = req.query.labelName as string;
+    if (!newName || newName === '' /* || newName.length > MAX_LENGTH */) {
+        return res.status(400).send("Name is invalid");
+    }
+    label.name = newName;
     workspace.save();
     res.sendStatus(200);
 }
