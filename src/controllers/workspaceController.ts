@@ -30,6 +30,8 @@ interface CreateWorkspaceRequestBody {
     }[]
 }
 
+// TODO: change to API doc, returns 400 in case of duplicate sensor
+// add functionality: return 400 when unknown sensorType is received
 export const postCreateWorkspace = async (req: Request, res: Response) => {
     const body: CreateWorkspaceRequestBody = req.body;
     // do i need to check if such an user exists and how ?
@@ -46,6 +48,13 @@ export const postCreateWorkspace = async (req: Request, res: Response) => {
             case "Magnetometer": sensorType = MAGNETOMETER; break;
         }
         sensors.push({sensorType:sensorType, samplingRate:sensor.samplingRate});
+    }
+    if (
+        sensors.filter(s => s.sensorType.name === "Accelerometer").length > 1 || 
+        sensors.filter(s => s.sensorType.name === "Gyroscope").length > 1 ||
+        sensors.filter(s => s.sensorType.name === "Magnetometer").length > 1
+    ) {
+        return res.status(400).send("Cannot create workspace with duplicate sensors");        
     }
     const workspace = await Workspace.create({
         name: body.name,
