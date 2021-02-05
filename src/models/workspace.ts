@@ -21,7 +21,8 @@ const SubmissionIdSchema = new mongoose.Schema({
     hash: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
+        sparse: true
     }
 });
 

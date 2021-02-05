@@ -49,6 +49,7 @@ app.get("/api/workspaces/:workspaceId/sensors", workspaceController.getWorkspace
 app.get("/api/workspaces/:workspaceId/labels", labelController.getLabels);
 app.post("/api/workspaces/:workspaceId/labels/create", labelController.postCreateLabel);
 app.get("/api/workspaces/:workspaceId/generateSubmissionId", workspaceController.getGenerateSubmissionId);
+app.get("/api/workspaces/:workspaceId/samples", sampleController.getSamples);
 
 app.use("/api/workspaces/:workspaceId/labels/:labelId", labelIdValidator);
 app.use("/api/workspaces/:workspaceId/labels/:labelId", labelFinder);

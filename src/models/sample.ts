@@ -1,19 +1,19 @@
 import mongoose from "mongoose";
 import { ILabel, LabelSchema } from "./label";
 
-interface IDataPoint extends mongoose.Document {
-    value: number[],
-    timestamp: number
+export interface IDataPoint extends mongoose.Document {
+    timestamp: number,
+    data: number[]
 }
 
 const DataPointSchema = new mongoose.Schema({
-    value: {
-        type: [Number],
+    timestamp: {
+        type: Number,
         required: true,
         unique: false
     },
-    timestamp: {
-        type: Number,
+    data: {
+        type: [Number],
         required: true,
         unique: false
     }
@@ -37,7 +37,7 @@ const TimeFrameSchema = new mongoose.Schema({
     }
 });
 
-interface ISensorDataPoints extends mongoose.Document {
+export interface ISensorDataPoints extends mongoose.Document {
     sensorId: string // ObjectId maybe?
     dataPoints: IDataPoint[]
 }
@@ -80,8 +80,13 @@ export const SampleSchema = new mongoose.Schema({
         unique: false
     },
     allSensorDataPoints: {
-        type: [TimeFrameSchema],
+        type: [SensorDataPointsSchema],
         required: true,
+        unique: false
+    },
+    timeFrames: {
+        type: [TimeFrameSchema],
+        required: true, // ????
         unique: false
     }
 });
