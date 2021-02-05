@@ -3,6 +3,7 @@ import dotenv from "dotenv"
 import mongoose from "mongoose"
 import * as workspaceController from "./controllers/workspaceController"
 import * as labelController from "./controllers/labelController";
+import * as sampleController from "./controllers/sampleController";
 import { workspaceIdValidator } from "./middlewares/workspaceIdValidator";
 import { workspaceFinder } from "./middlewares/workspaceFinder";
 import { labelIdValidator } from "./middlewares/labelIdValidator";
@@ -55,4 +56,5 @@ app.use("/api/workspaces/:workspaceId/labels/:labelId", labelFinder);
 app.put("/api/workspaces/:workspaceId/labels/:labelId/rename", labelController.putRenameLabel);
 app.put("/api/workspaces/:workspaceId/labels/:labelId/describe", labelController.putDescribeLabel);
 
+app.post("/api/submitSample", sampleController.postSubmitSample);
 module.exports = server;

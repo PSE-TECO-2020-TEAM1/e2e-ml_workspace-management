@@ -13,7 +13,8 @@ export interface IWorkspace extends mongoose.Document {
     submissionIds: ISubmissionId[],
     sensors: ISensor[],
     labels: ILabel[],
-    sample: ISample,
+    samples: ISample[],
+    lastChangeDate: Date
 }
 
 const SubmissionIdSchema = new mongoose.Schema({
@@ -53,6 +54,11 @@ const WorkspaceSchema = new mongoose.Schema({
     samples: {
         type: [SampleSchema],
         required: false,
+        unique: false
+    },
+    lastChangeDate: {
+        type: Date,
+        required: true,
         unique: false
     }
 });

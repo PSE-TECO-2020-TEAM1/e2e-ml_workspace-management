@@ -47,7 +47,12 @@ export const postCreateWorkspace = async (req: Request, res: Response) => {
         }
         sensors.push({sensorType:sensorType, samplingRate:sensor.samplingRate});
     }
-    const workspace = await Workspace.create({name: body.name, userId:body.userId, sensors: sensors});
+    const workspace = await Workspace.create({
+        name: body.name,
+        userId:body.userId,
+        sensors: sensors,
+        lastChangeDate: new Date()
+    });
     res.status(200).json(workspace._id);
 }
 

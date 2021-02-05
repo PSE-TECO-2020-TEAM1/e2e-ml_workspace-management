@@ -60,8 +60,7 @@ export interface ISample extends mongoose.Document {
     end: number,
     label: ILabel,
     allSensorDataPoints: ISensorDataPoints[],
-    timeFrames: ITimeFrame[],
-    lastChangeDate: Date
+    timeFrames: ITimeFrame[]
 }
 
 export const SampleSchema = new mongoose.Schema({
@@ -82,11 +81,6 @@ export const SampleSchema = new mongoose.Schema({
     },
     allSensorDataPoints: {
         type: [TimeFrameSchema],
-        required: true,
-        unique: false
-    },
-    lastChangeDate: {
-        type: Date,
         required: true,
         unique: false
     }
