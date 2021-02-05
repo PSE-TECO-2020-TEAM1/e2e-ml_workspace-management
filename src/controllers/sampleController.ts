@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { IDataPoint, ISample, ISensorDataPoints } from "../models/sample";
+import { IDataPoint, ISample, ISensorDataPoints, ITimeFrame } from "../models/sample";
 import Workspace, { IWorkspace } from "../models/workspace";
 
 interface GetSamplesResponseBody {
@@ -55,7 +55,7 @@ interface PostSubmitSampleRequestBody {
     }[]
 }
 
-// TODO
+// TODO: change to API doc, return sample id 
 // timeframes ne olacak ilk yollandiginda
 export const postSubmitSample = async (req: Request, res: Response) => {
     const body = req.body as PostSubmitSampleRequestBody;
@@ -63,9 +63,7 @@ export const postSubmitSample = async (req: Request, res: Response) => {
     const label = workspace.labels.find(l => l.name === body.label);
     const start = body.start;
     const end = body.end;
-    // console.log(workspace);
     if (!workspace) {
-        // console.log("GG");
         return res.status(400).send("No workspace matched with given submission id");
     }
     if (!label) {
@@ -82,8 +80,6 @@ export const postSubmitSample = async (req: Request, res: Response) => {
     
     let sensorDataPoints : ISensorDataPoints[] = [];
     for (const sensorDataPoint of body.sensorDataPoints) {
-        console.log(workspace.sensors);
-        console.log("\n" + sensorDataPoint.sensor);
         const sensorId = workspace.sensors.find(s => s.sensorType.name === sensorDataPoint.sensor)._id as string;
         const dataPoints = sensorDataPoint.dataPoints as IDataPoint[];
         const formattedSensorDataPoint = {
@@ -101,6 +97,55 @@ export const postSubmitSample = async (req: Request, res: Response) => {
         timeFrames: []
     } as ISample;
     workspace.samples.push(sample);
+    workspace.lastChangeDate = new Date();
+    workspace.save();
+    res.sendStatus(200);
+}
+
+
+// TODO: bring to the right format
+export const getSample = async (req: Request, res: Response) => {
+    res.status(200).json(res.locals.sample);
+}
+
+export const deleteSample = async (req: Request, res: Response) => {
+    const sample = res.locals.sample as ISample;
+    const workspace = res.locals.workspace as IWorkspace;
+    await sample.remove();
+    workspace.save();
+    res.sendStatus(200);
+}
+
+export const putRelabelSample = async (req: Request, res: Response) => {
+    const sample = res.locals.sample as ISample;
+    const workspace = res.locals.workspace as IWorkspace;
+    const labelId = req.query.labelId;
+    const label = workspace.labels.find(l => l._id.toString() === labelId);
+    if (!label) {
+        return res.status(400).send("Label with given id does not exist in the workspace");
+    }
+    sample.label = label;
+    workspace.save();
+    res.sendStatus(200);
+}
+
+interface PutChangeTimeFramesBody {
+    [ index: number ]: {
+        start: number,
+        end: number
+    }
+}
+
+// TODO: hide _id
+export const putChangeTimeFrames = async (req: Request, res: Response) => {
+    const sample = res.locals.sample as ISample;
+    const workspace = res.locals.workspace as IWorkspace;
+    const body = req.body as PutChangeTimeFramesBody;
+    let timeFrames: ITimeFrame[] = [];
+    for (const timeframe of Object.values(body)) {
+        timeFrames.push(timeframe);
+    }
+    sample.timeFrames = timeFrames;
     workspace.save();
     res.sendStatus(200);
 }

@@ -19,7 +19,7 @@ const DataPointSchema = new mongoose.Schema({
     }
 });
 
-interface ITimeFrame {
+export interface ITimeFrame {
     start: number,
     end: number
 }

@@ -8,6 +8,9 @@ import { workspaceIdValidator } from "./middlewares/workspaceIdValidator";
 import { workspaceFinder } from "./middlewares/workspaceFinder";
 import { labelIdValidator } from "./middlewares/labelIdValidator";
 import { labelFinder } from "./middlewares/labelFinder";
+import { sampleIdValidator } from "./middlewares/sampleValidator";
+import { sampleFinder } from "./middlewares/sampleFinder";
+
 
 dotenv.config();
 
@@ -58,4 +61,13 @@ app.put("/api/workspaces/:workspaceId/labels/:labelId/rename", labelController.p
 app.put("/api/workspaces/:workspaceId/labels/:labelId/describe", labelController.putDescribeLabel);
 
 app.post("/api/submitSample", sampleController.postSubmitSample);
+
+app.use("/api/workspaces/:workspaceId/samples/:sampleId", sampleIdValidator);
+app.use("/api/workspaces/:workspaceId/samples/:sampleId", sampleFinder);
+
+app.get("/api/workspaces/:workspaceId/samples/:sampleId", sampleController.getSample);
+app.delete("/api/workspaces/:workspaceId/samples/:sampleId", sampleController.deleteSample);
+app.put("/api/workspaces/:workspaceId/samples/:sampleId/relabel", sampleController.putRelabelSample);
+app.put("/api/workspaces/:workspaceId/samples/:sampleId/timeframes", sampleController.putChangeTimeFrames);
+
 module.exports = server;
