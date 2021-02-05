@@ -113,3 +113,32 @@ export const getGenerateSubmissionId = async (req: Request, res: Response) => {
     workspace.save(); // maybe await here
     res.status(200).send(submissionId.hash);
 }
+
+interface getSubmissionConfigResponseBody {
+    sensors: [{
+        name: string,
+        samplingRate: number
+    }],
+    labels: [{
+        name: string,
+        description: string
+    }]
+}
+
+export const getSubmissionConfig = async (req: Request, res: Response) => {
+    const submissionId = req.query.submissionId;
+    const workspace = await Workspace.findOne({"submissionIds.hash": submissionId}).exec();
+    if (!workspace) {
+        return res.status(400).send("Workspace with given submission id does not exist");
+    }
+    const formattedSensors = workspace.sensors.map(s => ({
+        name: s.sensorType.name,
+        samplingRate: s.samplingRate
+    }));
+    const formattedLabels = workspace.labels.map(l => ({
+        name: l.name,
+        description: l.description
+    }));
+    const config = {sensors: formattedSensors, labels: formattedLabels};
+    res.status(200).json(config);
+}

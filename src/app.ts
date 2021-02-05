@@ -59,7 +59,7 @@ app.use("/api/workspaces/:workspaceId/labels/:labelId", labelFinder);
 
 app.put("/api/workspaces/:workspaceId/labels/:labelId/rename", labelController.putRenameLabel);
 app.put("/api/workspaces/:workspaceId/labels/:labelId/describe", labelController.putDescribeLabel);
-
+app.delete("/api/workspaces/:workspaceId/labels/:labelId", labelController.deleteLabel);
 app.post("/api/submitSample", sampleController.postSubmitSample);
 
 app.use("/api/workspaces/:workspaceId/samples/:sampleId", sampleIdValidator);
@@ -69,5 +69,7 @@ app.get("/api/workspaces/:workspaceId/samples/:sampleId", sampleController.getSa
 app.delete("/api/workspaces/:workspaceId/samples/:sampleId", sampleController.deleteSample);
 app.put("/api/workspaces/:workspaceId/samples/:sampleId/relabel", sampleController.putRelabelSample);
 app.put("/api/workspaces/:workspaceId/samples/:sampleId/timeframes", sampleController.putChangeTimeFrames);
+
+app.get("/api/submissionConfig", workspaceController.getSubmissionConfig);
 
 module.exports = server;

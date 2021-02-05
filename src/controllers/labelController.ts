@@ -32,9 +32,16 @@ export const postCreateLabel = async (req: Request, res: Response) => {
 }
 
 // TODO after sample part complete
-// export const deleteLabel = async (req: Request, res: Response) => {
-// 
-// }
+export const deleteLabel = async (req: Request, res: Response) => {
+    const workspace = res.locals.workspace as IWorkspace;
+    const label = res.locals.label as ILabel;
+    const samples = workspace.samples.filter(s => {
+        return s.label._id.toString() === label._id.toString();
+    });
+    samples.forEach(s => s.remove());
+    workspace.save();
+    res.sendStatus(200);
+}
 
 export const putRenameLabel = async (req: Request, res: Response) => {
     const workspace = res.locals.workspace as IWorkspace;
