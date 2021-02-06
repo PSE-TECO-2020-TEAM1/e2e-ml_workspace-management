@@ -67,6 +67,9 @@ export const postCreateWorkspace = async (req: Request, res: Response) => {
 
 // does not handle the case where workspaceName is not provided
 export const putRenameWorkspace = async (req : Request, res : Response) => {
+    if (!req.query.workspaceName) {
+        return res.status(400).send("Workspace name needs to be provided");
+    }
     const workspaceName = req.query.workspaceName as string;
     const workspace = res.locals.workspace as IWorkspace;
     workspace.name = workspaceName;
