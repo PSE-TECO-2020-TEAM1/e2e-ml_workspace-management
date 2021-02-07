@@ -21,15 +21,15 @@ export const getSamples = async (req: Request, res: Response) => {
     const onlyDate = (req.query.onlyDate === "true");
     const showDataPoints = (req.query.showDataPoints === "true");
     if (onlyDate) {
-        console.log(workspace.lastChangeDate.getTime());
-        return res.status(200).json(workspace.lastChangeDate.getTime());
+        return res.status(200).json(workspace.lastModified.getTime());
     }
     const samples = workspace.samples;
     // TODO: hide _id from response
     if (showDataPoints) {
         const formattedSamples = samples.map(s => ({
             label: s.label.name,
-            sensorDataPoints: s.allSensorDataPoints
+            sensorDataPoints: s.allSensorDataPoints,
+            timeFrames: s.timeFrames
         }));
         return res.status(200).json(formattedSamples);
     }
@@ -60,18 +60,21 @@ interface PostSubmitSampleRequestBody {
 export const postSubmitSample = async (req: Request, res: Response) => {
     const body = req.body as PostSubmitSampleRequestBody;
     const workspace = await Workspace.findOne({"submissionIds.hash": body.submissionId}).exec();
-    const label = workspace.labels.find(l => l.name === body.label);
-    const start = body.start;
-    const end = body.end;
     if (!workspace) {
         return res.status(400).send("No workspace matched with given submission id");
     }
+
+    const label = workspace.labels.find(l => l.name === body.label);
     if (!label) {
         return res.status(400).send("This label does not exist");
     }
+
+    const start = body.start;
+    const end = body.end;
     if (start >= end) {
         return res.status(400).send("Start time cannot be later than end time");
     }
+
     body.sensorDataPoints.forEach(d => {
         if (!workspace.sensors.some(s => s.sensorType.name === d.sensor)) {
             return res.status(400).send("This sensor does not belong to the workspace");
@@ -97,7 +100,7 @@ export const postSubmitSample = async (req: Request, res: Response) => {
         timeFrames: []
     } as ISample;
     workspace.samples.push(sample);
-    workspace.lastChangeDate = new Date();
+    workspace.lastModified = new Date();
     workspace.save();
     res.sendStatus(200);
 }
@@ -112,6 +115,7 @@ export const deleteSample = async (req: Request, res: Response) => {
     const sample = res.locals.sample as ISample;
     const workspace = res.locals.workspace as IWorkspace;
     await sample.remove();
+    workspace.lastModified = new Date();
     workspace.save();
     res.sendStatus(200);
 }
@@ -125,6 +129,7 @@ export const putRelabelSample = async (req: Request, res: Response) => {
         return res.status(400).send("Label with given id does not exist in the workspace");
     }
     sample.label = label;
+    workspace.lastModified = new Date();
     workspace.save();
     res.sendStatus(200);
 }
@@ -142,10 +147,22 @@ export const putChangeTimeFrames = async (req: Request, res: Response) => {
     const workspace = res.locals.workspace as IWorkspace;
     const body = req.body as PutChangeTimeFramesBody;
     let timeFrames: ITimeFrame[] = [];
+    let i = 0;
     for (const timeframe of Object.values(body)) {
+        if (timeframe.start >= timeframe.end) {
+            return res.status(400).send("Timeframe start should be earlier than end");
+        }
+        if (i > 0 && timeFrames[i-1].start >= timeframe.start) {
+            return res.status(400).send("Timeframes are not sorted");
+        }
+        if (i > 0 && timeFrames[i-1].end >= timeframe.start) {
+            return res.status(400).send("Timeframes should not be intersecting with each other");
+        }
         timeFrames.push(timeframe);
+        i++;
     }
     sample.timeFrames = timeFrames;
+    workspace.lastModified = new Date();
     workspace.save();
     res.sendStatus(200);
 }

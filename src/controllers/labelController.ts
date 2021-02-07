@@ -1,4 +1,4 @@
-import { request, Request, Response } from "express"
+import { Request, Response } from "express"
 import { ILabel } from "../models/label";
 import { IWorkspace } from "../models/workspace";
 
@@ -38,6 +38,9 @@ export const deleteLabel = async (req: Request, res: Response) => {
     const samples = workspace.samples.filter(s => {
         return s.label._id.toString() === label._id.toString();
     });
+    if (samples.length > 0) {
+        workspace.lastModified = new Date();
+    }
     samples.forEach(s => s.remove());
     workspace.save();
     res.sendStatus(200);

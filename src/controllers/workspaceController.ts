@@ -60,7 +60,7 @@ export const postCreateWorkspace = async (req: Request, res: Response) => {
         name: body.name,
         userId:body.userId,
         sensors: sensors,
-        lastChangeDate: new Date()
+        lastModified: new Date()
     });
     res.status(200).json(workspace._id);
 }
