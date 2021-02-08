@@ -2,22 +2,25 @@ import mongoose from "mongoose";
 
 export interface ILabel extends mongoose.Document {
     name: string,
-    description: string
+    description: string,
+    workspaceId: string
 }
 
-// name unique doesnt work across workspaces of different users
 export const LabelSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
-        unique: true,
-        sparse: true
+        unique: false,
     },
     description: {
         type: String,
         required: false,
-        unique: false,
-        sparse: true
+        unique: false
+    },
+    workspaceId: {
+        type: String,
+        required: true,
+        unique: false
     }
 }); 
 

@@ -47,6 +47,7 @@ export const postCreateWorkspace = async (req: Request, res: Response) => {
             case "Accelerometer": sensorType = ACCELEROMETER; break;
             case "Gyroscope": sensorType = GYROSCOPE; break;
             case "Magnetometer": sensorType = MAGNETOMETER; break;
+            default: return res.status(400).send("Invalid sensor type");
         }
         sensors.push({sensorType:sensorType, samplingRate:sensor.samplingRate});
     }
@@ -74,13 +75,13 @@ export const putRenameWorkspace = async (req : Request, res : Response) => {
     const workspaceName = req.query.workspaceName as string;
     const workspace = res.locals.workspace as IWorkspace;
     workspace.name = workspaceName;
-    await workspace.save();
+    workspace.save(); // await ?
     res.sendStatus(200);
 }
 
 export const deleteWorkspace = async (req : Request, res: Response) => {
     const workspace = res.locals.workspace as IWorkspace;
-    await workspace.remove();
+    workspace.remove(); // await ?
     res.sendStatus(200);
 }
 
@@ -118,15 +119,16 @@ export const getGenerateSubmissionId = async (req: Request, res: Response) => {
     res.status(200).send(submissionId.hash);
 }
 
-interface getSubmissionConfigResponseBody {
-    sensors: [{
+interface GetSubmissionConfigResponseBody {
+    sensors: {
         name: string,
         samplingRate: number
-    }],
-    labels: [{
+    }[],
+    labels: {
+        id: string,
         name: string,
         description: string
-    }]
+    }[]
 }
 
 export const getSubmissionConfig = async (req: Request, res: Response) => {
@@ -142,10 +144,11 @@ export const getSubmissionConfig = async (req: Request, res: Response) => {
     const formattedLabels = await Promise.all(workspace.labelIds.map(async l => {
         const label = await Label.findById(l).exec();
         return {
+            id: label._id,
             name: label.name,
             description: label.description
         }
     }));
-    const config = {sensors: formattedSensors, labels: formattedLabels};
+    const config: GetSubmissionConfigResponseBody = {sensors: formattedSensors, labels: formattedLabels};
     res.status(200).json(config);
 }

@@ -66,14 +66,9 @@ export const postSubmitSample = async (req: Request, res: Response) => {
         return res.status(400).send("No workspace matched with given submission id");
     }
 
-    const label = await Label.findOne({name: body.label}).exec();
+    const label = await Label.findOne({name: body.label, workspaceId: workspace._id}).exec();
     if (!label) {
         return res.status(400).send("This label does not exist");
-    }
-
-    const labelId = workspace.labelIds.find(l => l === label._id.toString());
-    if (!labelId) {
-        return res.status(400).send("This label does not belong to the workspace");
     }
 
     const start = body.start;
@@ -107,7 +102,7 @@ export const postSubmitSample = async (req: Request, res: Response) => {
     const sample : ISample = {
         start: start,
         end: end,
-        labelId: labelId,
+        labelId: label._id,
         allSensorDataPoints: sensorDataPoints,
         timeFrames: [timeFrame]
     } as ISample;
