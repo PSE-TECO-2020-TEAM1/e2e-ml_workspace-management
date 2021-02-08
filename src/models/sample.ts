@@ -58,7 +58,7 @@ const SensorDataPointsSchema = new mongoose.Schema({
 export interface ISample extends mongoose.Document {
     start: number,
     end: number,
-    label: ILabel,
+    labelId: string,
     allSensorDataPoints: ISensorDataPoints[],
     timeFrames: ITimeFrame[]
 }
@@ -74,8 +74,8 @@ export const SampleSchema = new mongoose.Schema({
         required: true,
         unique: false
     },
-    label: {
-        type: LabelSchema,
+    labelId: {
+        type: String,
         required: true,
         unique: false
     },
@@ -91,3 +91,4 @@ export const SampleSchema = new mongoose.Schema({
     }
 });
 
+export default mongoose.model("Sample", SampleSchema);

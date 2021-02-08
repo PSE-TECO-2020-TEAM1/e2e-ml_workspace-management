@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import { IDataPoint, ISample, ISensorDataPoints, ITimeFrame } from "../models/sample";
+import Sample, { IDataPoint, ISample, ISensorDataPoints, ITimeFrame} from "../models/sample";
 import Workspace, { IWorkspace } from "../models/workspace";
-
+import Label from "../models/label";
 interface GetSamplesResponseBody {
     [ index: number ]: {
         label: string,
@@ -23,20 +23,22 @@ export const getSamples = async (req: Request, res: Response) => {
     if (onlyDate) {
         return res.status(200).json(workspace.lastModified.getTime());
     }
-    const samples = workspace.samples;
+    const sampleIds = workspace.sampleIds;
+    const samples = await Sample.find().where("_id").in(sampleIds).exec() as ISample[];
     // TODO: hide _id from response
     if (showDataPoints) {
-        const formattedSamples = samples.map(s => ({
-            label: s.label.name,
+        const formattedSamples = await Promise.all(samples.map(async s => (
+            {
+            label: (await Label.findById(s.labelId)).name,
             sensorDataPoints: s.allSensorDataPoints,
             timeFrames: s.timeFrames
-        }));
+        })));
         return res.status(200).json(formattedSamples);
     }
-    const formattedSamples = samples.map(s => ({
-        label: s.label.name,
+    const formattedSamples = await Promise.all(samples.map(async s => ({
+        label: (await Label.findById(s.labelId)).name,
         sampleId: s._id 
-    }));
+    })));
     res.status(200).json(formattedSamples);
 }
 
@@ -64,9 +66,14 @@ export const postSubmitSample = async (req: Request, res: Response) => {
         return res.status(400).send("No workspace matched with given submission id");
     }
 
-    const label = workspace.labels.find(l => l.name === body.label);
+    const label = await Label.findOne({name: body.label}).exec();
     if (!label) {
         return res.status(400).send("This label does not exist");
+    }
+
+    const labelId = workspace.labelIds.find(l => l === label._id.toString());
+    if (!labelId) {
+        return res.status(400).send("This label does not belong to the workspace");
     }
 
     const start = body.start;
@@ -92,14 +99,22 @@ export const postSubmitSample = async (req: Request, res: Response) => {
         sensorDataPoints.push(formattedSensorDataPoint);
     }
 
+    const timeFrame = {
+        start: start,
+        end: end
+    } as ITimeFrame;
+
     const sample : ISample = {
         start: start,
         end: end,
-        label: label,
+        labelId: labelId,
         allSensorDataPoints: sensorDataPoints,
-        timeFrames: []
+        timeFrames: [timeFrame]
     } as ISample;
-    workspace.samples.push(sample);
+    
+    const sampleId = (await Sample.create(sample))._id;
+
+    workspace.sampleIds.push(sampleId);
     workspace.lastModified = new Date();
     workspace.save();
     res.sendStatus(200);
@@ -114,8 +129,9 @@ export const getSample = async (req: Request, res: Response) => {
 export const deleteSample = async (req: Request, res: Response) => {
     const sample = res.locals.sample as ISample;
     const workspace = res.locals.workspace as IWorkspace;
-    await sample.remove();
     workspace.lastModified = new Date();
+    workspace.sampleIds = workspace.sampleIds.filter(s => s !== sample._id.toString());
+    sample.remove();
     workspace.save();
     res.sendStatus(200);
 }
@@ -123,12 +139,17 @@ export const deleteSample = async (req: Request, res: Response) => {
 export const putRelabelSample = async (req: Request, res: Response) => {
     const sample = res.locals.sample as ISample;
     const workspace = res.locals.workspace as IWorkspace;
-    const labelId = req.query.labelId;
-    const label = workspace.labels.find(l => l._id.toString() === labelId);
+    const labelId = req.query.labelId as string;
+    const label = await Label.findById(labelId).exec();
     if (!label) {
-        return res.status(400).send("Label with given id does not exist in the workspace");
+        return res.status(400).send("Label with given id does not exist");
     }
-    sample.label = label;
+    if (!workspace.labelIds.includes(labelId)) { // change message to make it consistent with labelFinder
+        return res.status(400).send("This label does not belong to the workspace");
+    }
+
+    sample.labelId = labelId;
+    sample.save();
     workspace.lastModified = new Date();
     workspace.save();
     res.sendStatus(200);
@@ -162,6 +183,7 @@ export const putChangeTimeFrames = async (req: Request, res: Response) => {
         i++;
     }
     sample.timeFrames = timeFrames;
+    sample.save();
     workspace.lastModified = new Date();
     workspace.save();
     res.sendStatus(200);

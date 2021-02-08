@@ -1,12 +1,15 @@
 import { Request, Response, NextFunction } from "express";
 import Workspace, { IWorkspace } from "../models/workspace";
+import Label from "../models/label";
 
 export const labelFinder = async (req: Request, res: Response, next: NextFunction) => {
     const workspace = res.locals.workspace as IWorkspace;
-    // toString() seems like a workaround
-    const label = workspace.labels.find(l => l._id.toString() === req.params.labelId);
+    const label = await Label.findById(req.params.labelId).exec();
 	if (!label) {
 		return res.status(400).send("Label with given id does not exist");
+	}
+	if (!workspace.labelIds.includes(label._id)) {
+		return res.status(400).send("Label with given id does not belong to the workspace");
 	}
 	res.locals.label = label;
 	next();

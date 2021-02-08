@@ -1,6 +1,7 @@
 import { Request, Response } from "express"
 import Workspace, { ISubmissionId, IWorkspace } from "../models/workspace"
 import { ACCELEROMETER, GYROSCOPE, MAGNETOMETER, SensorType } from "../models/sensor"
+import Label from "../models/label";
 import crypto from "crypto";
 
 interface GetWorkspacesResponseBody {
@@ -138,9 +139,12 @@ export const getSubmissionConfig = async (req: Request, res: Response) => {
         name: s.sensorType.name,
         samplingRate: s.samplingRate
     }));
-    const formattedLabels = workspace.labels.map(l => ({
-        name: l.name,
-        description: l.description
+    const formattedLabels = await Promise.all(workspace.labelIds.map(async l => {
+        const label = await Label.findById(l).exec();
+        return {
+            name: label.name,
+            description: label.description
+        }
     }));
     const config = {sensors: formattedSensors, labels: formattedLabels};
     res.status(200).json(config);
