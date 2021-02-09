@@ -12,7 +12,7 @@ interface GetWorkspacesResponseBody {
 }
 
 export const getWorkspaces = async (req: Request, res: Response) => {
-    const userId = req.query.userId as string; // this line might cause problems later ?
+    const userId = res.locals.userId as string;
     const workspaces = await Workspace.find({userId: userId}).exec();
     const formattedWorkspaces : GetWorkspacesResponseBody = workspaces.map(w => (
         {
@@ -24,7 +24,6 @@ export const getWorkspaces = async (req: Request, res: Response) => {
 }
 interface CreateWorkspaceRequestBody {
     name: string,
-    userId: string,
     sensors: {
         sensorName: string,
         samplingRate: number
@@ -41,6 +40,7 @@ export const postCreateWorkspace = async (req: Request, res: Response) => {
         // return res.status(400).send("");
     // }
     let sensors = [];
+    const userId = res.locals.userId;
     for (const sensor of body.sensors) {
         let sensorType : SensorType;
         switch (sensor.sensorName) {
@@ -60,7 +60,7 @@ export const postCreateWorkspace = async (req: Request, res: Response) => {
     }
     const workspace = await Workspace.create({
         name: body.name,
-        userId:body.userId,
+        userId: userId,
         sensors: sensors,
         lastModified: new Date()
     });
