@@ -34,11 +34,6 @@ interface CreateWorkspaceRequestBody {
 // add functionality: return 400 when unknown sensorType is received
 export const postCreateWorkspace = async (req: Request, res: Response) => {
     const body: CreateWorkspaceRequestBody = req.body;
-    // do i need to check if such an user exists and how ?
-    // const user = await Workspace.findOne({userId: body.userId}).exec();
-    // if(!user) {
-        // return res.status(400).send("");
-    // }
     let sensors = [];
     const userId = res.locals.userId;
     for (const sensor of body.sensors) {

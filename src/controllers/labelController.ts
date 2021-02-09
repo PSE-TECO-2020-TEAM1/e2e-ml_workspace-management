@@ -61,6 +61,7 @@ export const deleteLabel = async (req: Request, res: Response) => {
     res.sendStatus(200);
 }
 
+// TODO: check existing
 export const putRenameLabel = async (req: Request, res: Response) => {
     const label = res.locals.label as ILabel;
     const newName = req.query.labelName as string;
