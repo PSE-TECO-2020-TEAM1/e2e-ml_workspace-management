@@ -1,17 +1,16 @@
 import mongoose from "mongoose";
 import supertest from "supertest";
 import chai, { expect } from "chai";
-import mocha from "mocha";
 
 const app = require("../src/app.ts");
 const request = supertest(app);
-let workspaceId: string;
 const userId = 32;
-const workspaceName = "Test Workspace";
+const token =
+	"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzMiIsImlhdCI6MTYxMjg3NTc3NiwiZXhwIjoxNjQ0NDExNzc2fQ.K7xmiAYHY-NsK_Nn0RAEzxb4dIbX7dCi5p2m068jI_8";
 
-const workspaceInfo = {
+const validWorkspace = {
 	name: "Example Workspace",
-	userId: userId,
+	userId: userId, // to be deleted
 	sensors: [
 		{
 			sensorName: "Gyroscope",
@@ -24,22 +23,50 @@ const workspaceInfo = {
 	]
 };
 
-const toBeDeletedWorkspaceInfo = {
-	name: "Will Be Deleted",
-	userId: userId,
+const duplicateSensorWorkspace = {
+	name: "Duplicate Sensors Workspace",
+	userId: userId, // to be deleted
 	sensors: [
 		{
-			sensorName: "Magnetometer",
+			sensorName: "Gyroscope",
 			samplingRate: 50,
 		},
 		{
-			sensorName: "Accelerometer",
+			sensorName: "Gyroscope",
 			samplingRate: 64,
 		},
 	]
-};
-let toBeDeletedWorkspaceId: string;
+}
 
+const unsupportedSensorWorkspace = {
+	name: "Unsupported Sensor Workspace",
+	userId: userId, // to be deleted
+	sensors: [
+		{
+			sensorName: "Unsupported",
+			samplingRate: 50,
+		},
+		{
+			sensorName: "Gyroscope",
+			samplingRate: 64,
+		},
+	]
+}
+
+const invalidSensorSamplingRateWorkspace = {
+	name: "Invalid Sensor Sampling Rate Workspace",
+	userId: userId, // to be deleted
+	sensors: [
+		{
+			sensorName: "Accelerometer",
+			samplingRate: 50000,
+		},
+		{
+			sensorName: "Gyroscope",
+			samplingRate: -40,
+		},
+	]
+}
 
 describe("Testing API routes", () => {
 	before("Check connection", (done) => {
@@ -53,103 +80,109 @@ describe("Testing API routes", () => {
 		done();
 	});
 
-	// test order? can you create workspace within a test then use this workspace in another test
-	// or do you need to do it in before, then how to test creation of workspaces?
-	describe("Testing workspaces of a user", () => {
-		// IF THE WORKSPACE IS ACTUALLY CREATED CHECKED IN 3rd TEST
-		it("Create a workspace", (done) => {
-			request
-				.post("/api/workspaces/create")
-				.set('Content-Type', 'application/json')
-				.send(workspaceInfo)
-				.expect(200)
-				.end((err, res) => {
-					expect(res.body).to.be.a("string");
-					workspaceId = res.body;
-					done(err);
-				});
+	describe("GET /api/workspaces", () => {
+		it("Without authentication", (done) => {
+			request.get("/api/workspaces").expect(401, done);
 		});
 
-		it("Create another workspace that will be deleted", (done) => {
-			request
-				.post("/api/workspaces/create")
-				.set('Content-Type', 'application/json')
-				.send(toBeDeletedWorkspaceInfo)
-				.expect(200)
-				.end((err, res) => {
-					expect(res.body).to.be.a("string");
-					toBeDeletedWorkspaceId = res.body;
-					done(err);
-				});
-		})
-		// THIS ACTUALLY TEST CREATE WORKSPACE TOO, CONCERN?
-		it("Retrieve workspaces", (done) => {
+		it("With authentication", (done) => {
 			request
 				.get("/api/workspaces")
-				.query({userId: userId}) // TODO: needs to be changed after auth is implemented
+				.set("Authorization", "Bearer " + token)
 				.expect(200)
-				.end((err, res) => {
-					expect(res.body).to.have.nested.property("[0].id");
-					expect(res.body).to.have.nested.property("[0].name");
-					expect(res.body).to.have.nested.property("[1].id");
-					expect(res.body).to.have.nested.property("[1].name");
+				.then((res) => {
+					expect(res.body).to.be.an("array");
+					done();
+				})
+				.catch((err) => {
 					done(err);
 				});
 		});
+	});
 
-		describe("Testing DELETE /api/workspaces/:workspaceId, try deleting", () => {
-			it("An existing workspace", (done) => {
+	describe("POST /api/workspaces/create", () => {
+		it("Without authentication", (done) => {
+			request.post("/api/workspaces/create").expect(401, done);
+		});
+
+		describe("With authentication", () => {
+			it("Valid workspace information", (done) => {
 				request
-				.delete("/api/workspaces/" + toBeDeletedWorkspaceId)
+				.post("/api/workspaces/create")
+				.set('Content-Type', 'application/json')
+				.set("Authorization", "Bearer " + token)
+				.send(validWorkspace)
 				.expect(200)
-				.end((err, res) => {
+				.then((res) => {
+					expect(res.body).to.be.a("string");
+					done();
+				})
+				.catch((err) => {
 					done(err);
 				});
 			});
 
-			it("A non-existing workspace (deleted in previous test)", (done) => {
+			it("Duplicate sensors", (done) => {
 				request
-				.delete("/api/workspaces/" + toBeDeletedWorkspaceId)
+				.post("/api/workspaces/create")
+				.set('Content-Type', 'application/json')
+				.set("Authorization", "Bearer " + token)
+				.send(duplicateSensorWorkspace)
 				.expect(400)
-				.end((err, res) => {
-					expect(res.text).to.equal("Workspace with given id does not exist");
+				.then((res) => {
+					expect(res.text).to.be.a("string");
+					expect(res.text).to.be.equal("Cannot create workspace with duplicate sensors");
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				});
+			});
+
+			it("Unsupported sensors", (done) => {
+				request
+				.post("/api/workspaces/create")
+				.set('Content-Type', 'application/json')
+				.set("Authorization", "Bearer " + token)
+				.send(unsupportedSensorWorkspace)
+				.expect(400)
+				.then((res) => {
+					expect(res.text).to.be.a("string");
+					expect(res.text).to.be.equal("Invalid sensor type");
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				});
+			});
+			
+
+			it("Invalid sensor sampling rate", (done) => {
+				request
+				.post("/api/workspaces/create")
+				.set('Content-Type', 'application/json')
+				.set("Authorization", "Bearer " + token)
+				.send(invalidSensorSamplingRateWorkspace)
+				.expect(400)
+				.then((res) => {
+					expect(res.text).to.be.a("string");
+					expect(res.text).to.be.equal("Invalid sensor sampling rate");
+					done();
+				})
+				.catch((err) => {
 					done(err);
 				});
 			})
+
+			it("Invalid request", (done) => {
+				request
+					.post("/api/workspaces/create")
+					.set('Content-Type', 'application/json')
+					.set("Authorization", "Bearer " + token)
+					.send({ invalid: "invalid" })
+					.expect(400, done);
+			})
 		});
 
-		describe("Testing PUT /api/workspaces/:workspaceId, rename the workspace", () => {
-			it("With an invalid name", (done) => {
-				request
-				.put("/api/workspaces/" + workspaceId)
-				.query({workspaceName: ""})
-				.expect(400)
-				.end((err, res) => {
-					expect(res.text).to.be.a("string");
-					expect(res.text).to.equal("Workspace name needs to be provided");
-					done(err);
-				})
-			});
-			// HOW TO CHAIN REQUESTS TO TEST IF THE NAME CHANGE HAS REALLY OCCURED?
-			it("With a valid name", (done) => {
-				request
-				.put("/api/workspaces/" + workspaceId)
-				.query({workspaceName: workspaceName})
-				.expect(200)
-				.end((err, res) => {
-					// request
-					// 	.get("/api/workspaces")
-					// 	.query({userId: userId}) // TODO: needs to be changed after auth is implemented
-					// 	.expect(200)
-					// 	.end((err, res) => {
-					// 		console.log(res.body);
-					// 		expect(res.body).to.have.deep.property("[2].id", workspaceId);
-					// 		expect(res.body).to.have.deep.property("[0].name", workspaceName);
-					// 		done(err);
-					// 	})
-					done(err);
-				})
-			});
-		});
-	});
+	})
 });
