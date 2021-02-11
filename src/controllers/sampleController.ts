@@ -58,7 +58,7 @@ interface PostSubmitSampleRequestBody {
 }
 
 // TODO: change to API doc, return sample id 
-// timeframes ne olacak ilk yollandiginda
+// TODO: sample data points consistency check
 export const postSubmitSample = async (req: Request, res: Response) => {
     const body = req.body as PostSubmitSampleRequestBody;
     const workspace = await Workspace.findOne({"submissionIds.hash": body.submissionId}).exec();
@@ -85,10 +85,15 @@ export const postSubmitSample = async (req: Request, res: Response) => {
     
     let sensorDataPoints : ISensorDataPoints[] = [];
     for (const sensorDataPoint of body.sensorDataPoints) {
-        const sensorId = workspace.sensors.find(s => s.sensorType.name === sensorDataPoint.sensor)._id as string;
+        const sensor = workspace.sensors.find(s => s.sensorType.name === sensorDataPoint.sensor);
         const dataPoints = sensorDataPoint.dataPoints as IDataPoint[];
+        const unmatchingFormat = dataPoints.find(d => d.data.length !== sensor.sensorType.dataFormat.length);
+        
+        if (unmatchingFormat) {
+            return res.status(400).send("Data format does not match the sensor's");
+        }
         const formattedSensorDataPoint = {
-            sensorId: sensorId,
+            sensorId: sensor._id,
             dataPoints: dataPoints
         } as ISensorDataPoints
         sensorDataPoints.push(formattedSensorDataPoint);
