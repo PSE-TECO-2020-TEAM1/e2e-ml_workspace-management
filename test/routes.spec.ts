@@ -1,12 +1,18 @@
 import mongoose from "mongoose";
 import supertest from "supertest";
-import chai, { expect } from "chai";
+import { expect } from "chai";
 
 const app = require("../src/app.ts");
 const request = supertest(app);
 const userId = 32;
 const token =
 	"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzMiIsImlhdCI6MTYxMjg3NTc3NiwiZXhwIjoxNjQ0NDExNzc2fQ.K7xmiAYHY-NsK_Nn0RAEzxb4dIbX7dCi5p2m068jI_8";
+
+const nonExistingWorkspaceId = "000000000000000000000000";
+let renamedWorkspaceId: string;
+let deletedWorkspaceId: string;
+let sensorsWorkspaceId: string;
+let generateSubmissionIdWorkspaceId: string;
 
 const validWorkspace = {
 	name: "Example Workspace",
@@ -18,9 +24,9 @@ const validWorkspace = {
 		},
 		{
 			sensorName: "Accelerometer",
-			samplingRate: 64,
+			samplingRate: 25,
 		},
-	]
+	],
 };
 
 const duplicateSensorWorkspace = {
@@ -33,10 +39,10 @@ const duplicateSensorWorkspace = {
 		},
 		{
 			sensorName: "Gyroscope",
-			samplingRate: 64,
+			samplingRate: 25,
 		},
-	]
-}
+	],
+};
 
 const unsupportedSensorWorkspace = {
 	name: "Unsupported Sensor Workspace",
@@ -48,10 +54,10 @@ const unsupportedSensorWorkspace = {
 		},
 		{
 			sensorName: "Gyroscope",
-			samplingRate: 64,
+			samplingRate: 25,
 		},
-	]
-}
+	],
+};
 
 const invalidSensorSamplingRateWorkspace = {
 	name: "Invalid Sensor Sampling Rate Workspace",
@@ -65,8 +71,8 @@ const invalidSensorSamplingRateWorkspace = {
 			sensorName: "Gyroscope",
 			samplingRate: -40,
 		},
-	]
-}
+	],
+};
 
 describe("Testing API routes", () => {
 	before("Check connection", (done) => {
@@ -105,11 +111,10 @@ describe("Testing API routes", () => {
 			request.post("/api/workspaces/create").expect(401, done);
 		});
 
-		describe("With authentication", () => {
-			it("Valid workspace information", (done) => {
-				request
+		it("Valid workspace information", (done) => {
+			request
 				.post("/api/workspaces/create")
-				.set('Content-Type', 'application/json')
+				.set("Content-Type", "application/json")
 				.set("Authorization", "Bearer " + token)
 				.send(validWorkspace)
 				.expect(200)
@@ -120,29 +125,31 @@ describe("Testing API routes", () => {
 				.catch((err) => {
 					done(err);
 				});
-			});
+		});
 
-			it("Duplicate sensors", (done) => {
-				request
+		it("Duplicate sensors", (done) => {
+			request
 				.post("/api/workspaces/create")
-				.set('Content-Type', 'application/json')
+				.set("Content-Type", "application/json")
 				.set("Authorization", "Bearer " + token)
 				.send(duplicateSensorWorkspace)
 				.expect(400)
 				.then((res) => {
 					expect(res.text).to.be.a("string");
-					expect(res.text).to.be.equal("Cannot create workspace with duplicate sensors");
+					expect(res.text).to.be.equal(
+						"Cannot create workspace with duplicate sensors"
+					);
 					done();
 				})
 				.catch((err) => {
 					done(err);
 				});
-			});
+		});
 
-			it("Unsupported sensors", (done) => {
-				request
+		it("Unsupported sensors", (done) => {
+			request
 				.post("/api/workspaces/create")
-				.set('Content-Type', 'application/json')
+				.set("Content-Type", "application/json")
 				.set("Authorization", "Bearer " + token)
 				.send(unsupportedSensorWorkspace)
 				.expect(400)
@@ -154,13 +161,12 @@ describe("Testing API routes", () => {
 				.catch((err) => {
 					done(err);
 				});
-			});
-			
+		});
 
-			it("Invalid sensor sampling rate", (done) => {
-				request
+		it("Invalid sensor sampling rate", (done) => {
+			request
 				.post("/api/workspaces/create")
-				.set('Content-Type', 'application/json')
+				.set("Content-Type", "application/json")
 				.set("Authorization", "Bearer " + token)
 				.send(invalidSensorSamplingRateWorkspace)
 				.expect(400)
@@ -172,17 +178,204 @@ describe("Testing API routes", () => {
 				.catch((err) => {
 					done(err);
 				});
-			})
-
-			it("Invalid request", (done) => {
-				request
-					.post("/api/workspaces/create")
-					.set('Content-Type', 'application/json')
-					.set("Authorization", "Bearer " + token)
-					.send({ invalid: "invalid" })
-					.expect(400, done);
-			})
 		});
 
-	})
+		it("Invalid request", (done) => {
+			request
+				.post("/api/workspaces/create")
+				.set("Content-Type", "application/json")
+				.set("Authorization", "Bearer " + token)
+				.send({ invalid: "invalid" })
+				.expect(400, done);
+		});
+	});
+
+	describe("PUT /api/workspaces/:workspaceId", () => {
+		before("Create a workspace to rename", (done) => {
+			request
+				.post("/api/workspaces/create")
+				.set("Content-Type", "application/json")
+				.set("Authorization", "Bearer " + token)
+				.send(validWorkspace)
+				.expect(200)
+				.then((res) => {
+					expect(res.body).to.be.a("string");
+					renamedWorkspaceId = res.body;
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				});
+		});
+
+		it("Rename without authentication", (done) => {
+			request.put("/api/workspaces/" + renamedWorkspaceId).expect(401, done);
+		});
+
+		it("Rename a non-existing workspace", (done) => {
+			request
+				.put("/api/workspaces/" + nonExistingWorkspaceId)
+				.set("Content-Type", "application/json")
+				.set("Authorization", "Bearer " + token)
+				.query({ workspaceName: "Renamed Workspace" })
+				.expect(400, done);
+		});
+
+		it("Rename without a name", (done) => {
+			request
+				.put("/api/workspaces/" + renamedWorkspaceId)
+				.set("Content-Type", "application/json")
+				.set("Authorization", "Bearer " + token)
+				.query({ workspaceName: "" })
+				.expect(400, done);
+		});
+
+		it("Rename successfully", (done) => {
+			request
+				.put("/api/workspaces/" + renamedWorkspaceId)
+				.set("Content-Type", "application/json")
+				.set("Authorization", "Bearer " + token)
+				.query({ workspaceName: "Renamed Workspace" })
+				.expect(200, done);
+		});
+	});
+
+	describe("DELETE /api/workspaces/:workspaceId", () => {
+		before("Create a workspace to delete", (done) => {
+			request
+				.post("/api/workspaces/create")
+				.set("Content-Type", "application/json")
+				.set("Authorization", "Bearer " + token)
+				.send(validWorkspace)
+				.expect(200)
+				.then((res) => {
+					expect(res.body).to.be.a("string");
+					deletedWorkspaceId = res.body;
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				});
+		});
+
+		it("Delete without authentication", (done) => {
+			request.delete("/api/workspaces/" + deletedWorkspaceId).expect(401, done);
+		});
+
+		it("Delete a non-existing workspace", (done) => {
+			request
+				.delete("/api/workspaces/" + nonExistingWorkspaceId)
+				.set("Authorization", "Bearer " + token)
+				.expect(400, done);
+		});
+
+		it("Delete successfully", (done) => {
+			request
+				.delete("/api/workspaces/" + deletedWorkspaceId)
+				.set("Authorization", "Bearer " + token)
+				.expect(200, done);
+		});
+	});
+
+	describe("GET /api/workspaces/:workspaceId/sensors", () => {
+		before("Create a workspace", (done) => {
+			request
+				.post("/api/workspaces/create")
+				.set("Content-Type", "application/json")
+				.set("Authorization", "Bearer " + token)
+				.send(validWorkspace)
+				.expect(200)
+				.then((res) => {
+					expect(res.body).to.be.a("string");
+					sensorsWorkspaceId = res.body;
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				});
+		});
+
+		it("Retrieve sensors without authentication", (done) => {
+			request
+				.get("/api/workspaces/" + sensorsWorkspaceId + "/sensors")
+				.expect(401, done);
+		});
+
+		it("Retrieve sensors of a non-existing workspace", (done) => {
+			request
+				.get("/api/workspaces/" + nonExistingWorkspaceId + "/sensors")
+				.set("Authorization", "Bearer " + token)
+				.expect(400, done);
+		});
+
+		it("Retrieve sensors successfully", (done) => {
+			request
+				.get("/api/workspaces/" + sensorsWorkspaceId + "/sensors")
+				.set("Authorization", "Bearer " + token)
+				.expect(200)
+				.then((res) => {
+					expect(res.body).to.be.an("array");
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				});
+		});
+	});
+
+	describe("GET /api/workspaces/:workspaceId/generateSubmissionId", () => {
+		before("Create a workspace", (done) => {
+			request
+				.post("/api/workspaces/create")
+				.set("Content-Type", "application/json")
+				.set("Authorization", "Bearer " + token)
+				.send(validWorkspace)
+				.expect(200)
+				.then((res) => {
+					expect(res.body).to.be.a("string");
+					generateSubmissionIdWorkspaceId = res.body;
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				});
+		});
+
+		it("Generate submission id without authentication", (done) => {
+			request
+				.get(
+					"/api/workspaces/" +
+						generateSubmissionIdWorkspaceId +
+						"/generateSubmissionId"
+				)
+				.expect(401, done);
+		});
+
+		it("Generate submision id for a non-existing workspace", (done) => {
+			request
+				.get(
+					"/api/workspaces/" + nonExistingWorkspaceId + "/generateSubmissionId"
+				)
+				.set("Authorization", "Bearer " + token)
+				.expect(400, done);
+		});
+
+		it("Generate submision id successfully", (done) => {
+			request
+				.get(
+					"/api/workspaces/" +
+						generateSubmissionIdWorkspaceId +
+						"/generateSubmissionId"
+				)
+				.set("Authorization", "Bearer " + token)
+				.expect(200)
+				.then((res) => {
+					expect(res.text).to.be.a("string").of.length(32);
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				});
+		});
+	});
 });
