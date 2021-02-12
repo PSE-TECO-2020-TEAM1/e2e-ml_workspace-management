@@ -9,7 +9,7 @@ export interface ISubmissionId extends mongoose.Document {
 }
 export interface IWorkspace extends mongoose.Document {
     name: string,
-    userId: string,
+    userId: string, // TODO: remove
     submissionIds: ISubmissionId[],
     sensors: ISensor[],
     labelIds: string[],
@@ -32,7 +32,7 @@ const WorkspaceSchema = new mongoose.Schema({
         required: true,
         unique: false
     },
-    userId: {
+    userId: { // TODO: remove
         type: String, 
         required: true,
         unique: false

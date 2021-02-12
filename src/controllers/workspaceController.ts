@@ -1,9 +1,19 @@
 import { Request, Response } from "express"
 import Workspace, { ISubmissionId, IWorkspace } from "../models/workspace"
-import { ACCELEROMETER, GYROSCOPE, MAGNETOMETER, SensorType } from "../models/sensor"
+import { ACCELEROMETER, GYROSCOPE, MAGNETOMETER, SensorType, SENSOR_TYPES } from "../models/sensor"
 import Label from "../models/label";
 import crypto from "crypto";
+import { body, param, query, ValidationChain } from "express-validator";
 
+interface RequestValidator {
+    postCreateWorkspace: Array<ValidationChain>,
+    putRenameWorkspace: Array<ValidationChain>
+}
+
+export let validator: RequestValidator = {
+    postCreateWorkspace: [],
+    putRenameWorkspace: []
+};
 interface GetWorkspacesResponseBody {
     [ index: number ]: {
         id: string,
@@ -30,28 +40,36 @@ interface CreateWorkspaceRequestBody {
     }[]
 }
 
+validator.postCreateWorkspace = [
+    body("name").exists().isString(),
+    body("sensors").exists().isArray(),
+    body("sensors.*.sensorName").exists().isString(),
+    body("sensors.*.samplingRate").exists().isNumeric()
+]
 // TODO: change to API doc, returns 400 in case of duplicate sensor
 // add functionality: return 400 when unknown sensorType is received
 export const postCreateWorkspace = async (req: Request, res: Response) => {
     const body: CreateWorkspaceRequestBody = req.body;
-    let sensors = [];
+    let sensors: {
+        sensorType: SensorType,
+        samplingRate: number
+    }[] = [];
     const userId = res.locals.userId;
     for (const sensor of body.sensors) {
-        let sensorType : SensorType;
-        switch (sensor.sensorName) {
-            case "Accelerometer": sensorType = ACCELEROMETER; break;
-            case "Gyroscope": sensorType = GYROSCOPE; break;
-            case "Magnetometer": sensorType = MAGNETOMETER; break;
-            default: return res.status(400).send("Invalid sensor type");
+        const sensorType = SENSOR_TYPES.find(t => t.name === sensor.sensorName); 
+        if (!sensorType) {
+            return res.status(400).send("Invalid sensor type");
+        }
+        if (sensorType.maxSamplingRate < sensor.samplingRate) {
+            return res.status(400).send("Invalid sensor sampling rate");
         }
         sensors.push({sensorType:sensorType, samplingRate:sensor.samplingRate});
     }
-    if (
-        sensors.filter(s => s.sensorType.name === "Accelerometer").length > 1 || 
-        sensors.filter(s => s.sensorType.name === "Gyroscope").length > 1 ||
-        sensors.filter(s => s.sensorType.name === "Magnetometer").length > 1
-    ) {
-        return res.status(400).send("Cannot create workspace with duplicate sensors");        
+    for (const type of SENSOR_TYPES) {
+        const countType = sensors.filter(s => s.sensorType.name === type.name).length;
+        if (countType > 1) {
+            return res.status(400).send("Cannot create workspace with duplicate sensors");
+        }
     }
     const workspace = await Workspace.create({
         name: body.name,
@@ -62,7 +80,12 @@ export const postCreateWorkspace = async (req: Request, res: Response) => {
     res.status(200).json(workspace._id);
 }
 
-// does not handle the case where workspaceName is not provided
+validator.putRenameWorkspace = [
+    param("workspaceId").exists().isString(),
+    query("workspaceName").exists().isString().notEmpty()
+]
+
+// TODO: put methods success status 201
 export const putRenameWorkspace = async (req : Request, res : Response) => {
     if (!req.query.workspaceName) {
         return res.status(400).send("Workspace name needs to be provided");

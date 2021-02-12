@@ -50,6 +50,8 @@ export const MAGNETOMETER: SensorType = {
     defaultSamplingRate: 250,
     dataFormat: ['x','y','z']
 } as const
+
+export const SENSOR_TYPES: readonly SensorType[] = [ACCELEROMETER, GYROSCOPE, MAGNETOMETER] as const;
 export interface ISensor extends mongoose.Document {
     sensorType: SensorType,
     samplingRate: number
