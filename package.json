@@ -7,7 +7,7 @@
     "build": "tsc",
     "build-run": "tsc;node dist/app.js",
     "start": "NODE_ENV=dev nodemon -r tsconfig-paths/register src/app.ts",
-    "test": "NODE_ENV=test DATABASE=workspace-management_test mocha --exit --check-leaks -r tsconfig-paths/register -r ts-node/register \"test/**/*.spec.ts\""
+    "test": "NODE_ENV=test DATABASE=workspace-management_test nyc mocha --exit --check-leaks -r tsconfig-paths/register -r ts-node/register \"test/**/*.spec.ts\""
   },
   "repository": {
     "type": "git",
@@ -29,7 +29,8 @@
     "express": "^4.17.1",
     "express-validator": "^6.9.2",
     "jsonwebtoken": "^8.5.1",
-    "mongoose": "^5.11.14"
+    "mongoose": "^5.11.14",
+    "nyc": "^15.1.0"
   },
   "devDependencies": {
     "@types/chai": "^4.2.14",
