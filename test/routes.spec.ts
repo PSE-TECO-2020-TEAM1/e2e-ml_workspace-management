@@ -9,7 +9,12 @@ const token =
 	"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzMiIsImlhdCI6MTYxMjg3NTc3NiwiZXhwIjoxNjQ0NDExNzc2fQ.K7xmiAYHY-NsK_Nn0RAEzxb4dIbX7dCi5p2m068jI_8";
 
 const nonExistingWorkspaceId = "000000000000000000000000";
-const nonExistingSubmissionId = "00000000000000000000000000000000"
+const nonExistingLabelId = "000000000000000000000001";
+const nonExistingSubmissionId = "00000000000000000000000000000002";
+
+const invalidWorkspaceId = "a";
+const invalidLabelId = "b";
+
 let renamedWorkspaceId: string;
 let deletedWorkspaceId: string;
 let sensorsWorkspaceId: string;
@@ -17,6 +22,7 @@ let labelsWorkspaceId: string;
 let labelsOtherWorkspaceId: string;
 let generateSubmissionIdWorkspaceId: string;
 let submissionId: string;
+let labelId: string;
 
 const validWorkspace = {
 	name: "Example Workspace",
@@ -82,6 +88,9 @@ const label = {
 	name: "Throw",
 	workspaceId: nonExistingWorkspaceId
 }
+
+const renamedLabelName = "Renamed";
+const labelDescription = "Description";
 
 describe("Testing API routes", () => {
 	before("Check connection", (done) => {
@@ -544,6 +553,13 @@ describe("Testing API routes", () => {
 			}
 		})
 
+		after("Clear labels", async () => {
+			const l = (await mongoose.connection.db.listCollections({name: "labels"}).toArray()).length;
+			if (l) {
+				mongoose.connection.dropCollection("labels");
+			}
+		})
+
 		it("Without authentication", (done) => {
 			request
 				.post("/api/workspaces/" + labelsWorkspaceId + "/labels/create")
@@ -624,5 +640,234 @@ describe("Testing API routes", () => {
 		});
 	});
 
-	
+	describe("PUT /api/workspaces/:workspaceId/labels/:labelId/rename", () => {
+		before("Create a workspace", (done) => {
+			request
+				.post("/api/workspaces/create")
+				.set("Content-Type", "application/json")
+				.set("Authorization", "Bearer " + token)
+				.send(validWorkspace)
+				.expect(200)
+				.then((res) => {
+					expect(res.body).to.be.a("string");
+					labelsWorkspaceId = res.body;
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				});
+		});
+
+		before("Create another workspace", (done) => {
+			request
+				.post("/api/workspaces/create")
+				.set("Content-Type", "application/json")
+				.set("Authorization", "Bearer " + token)
+				.send(validWorkspace)
+				.expect(200)
+				.then((res) => {
+					expect(res.body).to.be.a("string");
+					labelsOtherWorkspaceId = res.body;
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				});
+		});
+
+		before("Create a label for the workspace", (done) => {
+			request
+				.post("/api/workspaces/" + labelsWorkspaceId + "/labels/create")
+				.set("Content-Type", "application/json")
+				.set("Authorization", "Bearer " + token)
+				.send(label)
+				.expect(200)
+				.then((res) => {
+					expect(res.body).to.be.a("string");
+					labelId = res.body;
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				});
+		});
+
+		it("Rename label without authentication", (done) => {
+			request
+				.put("/api/workspaces/" + labelsWorkspaceId + "/labels/" + labelId + "/rename")
+				.query({labelName: renamedLabelName})
+				.expect(401, done);
+		});
+
+		it("Rename label of a non-existing workspace", (done) => {
+			request
+				.put("/api/workspaces/" + nonExistingWorkspaceId + "/labels/" + labelId + "/rename")
+				.set("Authorization", "Bearer " + token)
+				.query({labelName: renamedLabelName})
+				.expect(400)
+				.then((res) => {
+					expect(res.text).to.be.a("string").that.equals("Workspace with given id does not exist");
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				})
+		});
+
+		it("Rename a non-existing label", (done) => {
+			request
+				.put("/api/workspaces/" + labelsWorkspaceId + "/labels/" + nonExistingLabelId + "/rename")
+				.set("Authorization", "Bearer " + token)
+				.query({labelName: renamedLabelName})
+				.expect(400)
+				.then((res) => {
+					expect(res.text).to.be.a("string").that.equals("Label with given id does not exist");
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				})
+		});
+
+		it("Rename a label that doesn't belong to the workspace", (done) => {
+			request
+				.put("/api/workspaces/" + labelsOtherWorkspaceId + "/labels/" + labelId + "/rename")
+				.set("Authorization", "Bearer " + token)
+				.query({labelName: renamedLabelName})
+				.expect(400)
+				.then((res) => {
+					expect(res.text).to.be.a("string").that.equals("Label with given id does not belong to the workspace");
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				})
+		});
+
+		it("Rename successfully", (done) => {
+			request
+				.put("/api/workspaces/" + labelsWorkspaceId + "/labels/" + labelId + "/rename")
+				.set("Authorization", "Bearer " + token)
+				.query({labelName: renamedLabelName})
+				.expect(200, done);
+		});
+	});
+
+
+	describe("PUT /api/workspaces/:workspaceId/labels/:labelId/describe", () => {
+		before("Create a workspace", (done) => {
+			request
+				.post("/api/workspaces/create")
+				.set("Content-Type", "application/json")
+				.set("Authorization", "Bearer " + token)
+				.send(validWorkspace)
+				.expect(200)
+				.then((res) => {
+					expect(res.body).to.be.a("string");
+					labelsWorkspaceId = res.body;
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				});
+		});
+
+		before("Create another workspace", (done) => {
+			request
+				.post("/api/workspaces/create")
+				.set("Content-Type", "application/json")
+				.set("Authorization", "Bearer " + token)
+				.send(validWorkspace)
+				.expect(200)
+				.then((res) => {
+					expect(res.body).to.be.a("string");
+					labelsOtherWorkspaceId = res.body;
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				});
+		});
+
+		before("Create a label for the workspace", (done) => {
+			request
+				.post("/api/workspaces/" + labelsWorkspaceId + "/labels/create")
+				.set("Content-Type", "application/json")
+				.set("Authorization", "Bearer " + token)
+				.send(label)
+				.expect(200)
+				.then((res) => {
+					expect(res.body).to.be.a("string");
+					labelId = res.body;
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				});
+		});
+
+		it("Describe label without authentication", (done) => {
+			request
+				.put("/api/workspaces/" + labelsWorkspaceId + "/labels/" + labelId + "/describe")
+				.query({description: labelDescription})
+				.expect(401, done);
+		});
+
+		it("Describe label of a non-existing workspace", (done) => {
+			request
+				.put("/api/workspaces/" + nonExistingWorkspaceId + "/labels/" + labelId + "/describe")
+				.set("Authorization", "Bearer " + token)
+				.query({description: labelDescription})
+				.expect(400)
+				.then((res) => {
+					expect(res.text).to.be.a("string").that.equals("Workspace with given id does not exist");
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				})
+		});
+
+		it("Describe a non-existing label", (done) => {
+			request
+				.put("/api/workspaces/" + labelsWorkspaceId + "/labels/" + nonExistingLabelId + "/describe")
+				.set("Authorization", "Bearer " + token)
+				.query({description: labelDescription})
+				.expect(400)
+				.then((res) => {
+					expect(res.text).to.be.a("string").that.equals("Label with given id does not exist");
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				})
+		});
+
+		it("Describe a label that doesn't belong to the workspace", (done) => {
+			request
+				.put("/api/workspaces/" + labelsOtherWorkspaceId + "/labels/" + labelId + "/describe")
+				.set("Authorization", "Bearer " + token)
+				.query({description: labelDescription})
+				.expect(400)
+				.then((res) => {
+					expect(res.text).to.be.a("string").that.equals("Label with given id does not belong to the workspace");
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				})
+		});
+
+		it("Describe successfully", (done) => {
+			request
+				.put("/api/workspaces/" + labelsWorkspaceId + "/labels/" + labelId + "/describe")
+				.set("Authorization", "Bearer " + token)
+				.query({description: labelDescription})
+				.expect(200, done);
+		});
+	});
+
+	describe("GET /api/workspaces/:workspaceId/labels", () => {
+
+	});
 });

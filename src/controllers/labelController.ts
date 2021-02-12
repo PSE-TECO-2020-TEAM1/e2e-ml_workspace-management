@@ -36,7 +36,8 @@ export const postCreateLabel = async (req: Request, res: Response) => {
     const labelId = (await Label.create(label))._id;
     workspace.labelIds.push(labelId);
     workspace.save();
-    res.sendStatus(200);
+    // res.sendStatus(200);
+    res.status(200).send(labelId);
 }
 
 // TODO after sample part complete
