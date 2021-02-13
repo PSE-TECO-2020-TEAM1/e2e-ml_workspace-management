@@ -1,9 +1,12 @@
 import mongoose from "mongoose";
 import supertest from "supertest";
-import { expect } from "chai";
+import chai, { expect } from "chai";
 
 const app = require("../src/app.ts");
 const request = supertest(app);
+chai.use(require("chai-like"));
+chai.use(require("chai-things"));
+
 const userId = 32;
 const token =
 	"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzMiIsImlhdCI6MTYxMjg3NTc3NiwiZXhwIjoxNjQ0NDExNzc2fQ.K7xmiAYHY-NsK_Nn0RAEzxb4dIbX7dCi5p2m068jI_8";
@@ -23,6 +26,12 @@ let labelsOtherWorkspaceId: string;
 let generateSubmissionIdWorkspaceId: string;
 let submissionId: string;
 let labelId: string;
+let otherLabelId: string;
+
+let otherWorkspaceLabelId: string;
+let samplesWorkspaceId: string;
+let samplesOtherWorkspaceId: string;
+let samplesWorkspaceSubmissionId: string;
 
 const validWorkspace = {
 	name: "Example Workspace",
@@ -86,11 +95,41 @@ const invalidSensorSamplingRateWorkspace = {
 
 const label = {
 	name: "Throw",
-	workspaceId: nonExistingWorkspaceId
-}
+	workspaceId: nonExistingWorkspaceId,
+};
+
+const otherLabel = {
+	name: "Shake",
+	workspaceId: nonExistingWorkspaceId,
+};
 
 const renamedLabelName = "Renamed";
 const labelDescription = "Description";
+
+let sampleId: string;
+let sensorId: string;
+let sensorName = "Gyroscope";
+const sample = {
+	submissionId: "",
+	label: "",
+	start: 1609945761,
+	end: 1609945852,
+	sensorDataPoints: [
+		{
+			sensor: sensorName,
+			dataPoints: [
+				{
+					timestamp: 1609945761,
+					data: [24, 12, 113],
+				},
+				{
+					timestamp: 1609945762,
+					data: [24, 12, 123],
+				},
+			],
+		},
+	],
+};
 
 describe("Testing API routes", () => {
 	before("Check connection", (done) => {
@@ -445,14 +484,14 @@ describe("Testing API routes", () => {
 		it("Retrieve submission config with a non-matching submission id", (done) => {
 			request
 				.get("/api/submissionConfig")
-				.query({submissionId: nonExistingSubmissionId})
+				.query({ submissionId: nonExistingSubmissionId })
 				.expect(400, done);
 		});
 
 		it("Retrieve submission config successfully", (done) => {
 			request
 				.get("/api/submissionConfig")
-				.query({submissionId: submissionId})
+				.query({ submissionId: submissionId })
 				.expect(200)
 				.then((res) => {
 					expect(res.body).to.be.an("object");
@@ -461,7 +500,7 @@ describe("Testing API routes", () => {
 				.catch((err) => {
 					done(err);
 				});
-		})
+		});
 	});
 
 	describe("GET /api/workspaces/:workspaceId/labels", () => {
@@ -490,9 +529,9 @@ describe("Testing API routes", () => {
 
 		it("Retrieve labels of a non-existing workspace", (done) => {
 			request
-			.get("/api/workspaces/" + nonExistingWorkspaceId + "/labels")
-			.set("Authorization", "Bearer " + token)
-			.expect(400, done);
+				.get("/api/workspaces/" + nonExistingWorkspaceId + "/labels")
+				.set("Authorization", "Bearer " + token)
+				.expect(400, done);
 		});
 
 		it("Retrieve labels successfully", (done) => {
@@ -506,7 +545,7 @@ describe("Testing API routes", () => {
 				})
 				.catch((err) => {
 					done(err);
-				})
+				});
 		});
 	});
 
@@ -544,21 +583,29 @@ describe("Testing API routes", () => {
 				.catch((err) => {
 					done(err);
 				});
-		})
+		});
 
 		beforeEach("Clear labels", async () => {
-			const l = (await mongoose.connection.db.listCollections({name: "labels"}).toArray()).length;
+			const l = (
+				await mongoose.connection.db
+					.listCollections({ name: "labels" })
+					.toArray()
+			).length;
 			if (l) {
 				mongoose.connection.dropCollection("labels");
 			}
-		})
+		});
 
 		after("Clear labels", async () => {
-			const l = (await mongoose.connection.db.listCollections({name: "labels"}).toArray()).length;
+			const l = (
+				await mongoose.connection.db
+					.listCollections({ name: "labels" })
+					.toArray()
+			).length;
 			if (l) {
 				mongoose.connection.dropCollection("labels");
 			}
-		})
+		});
 
 		it("Without authentication", (done) => {
 			request
@@ -586,18 +633,20 @@ describe("Testing API routes", () => {
 				.expect(200)
 				.then((res) => {
 					return request
-							.post("/api/workspaces/" + labelsWorkspaceId + "/labels/create")
-							.set("Content-Type", "application/json")
-							.set("Authorization", "Bearer " + token)
-							.send(label)
-							.expect(400)
-							.then((res) => {
-								expect(res.text).to.be.a("string").that.equals("Label already exists");
-								done();
-							})
-							.catch((err) => {
-								done(err);
-							})
+						.post("/api/workspaces/" + labelsWorkspaceId + "/labels/create")
+						.set("Content-Type", "application/json")
+						.set("Authorization", "Bearer " + token)
+						.send(label)
+						.expect(400)
+						.then((res) => {
+							expect(res.text)
+								.to.be.a("string")
+								.that.equals("Label already exists");
+							done();
+						})
+						.catch((err) => {
+							done(err);
+						});
 				})
 				.catch((err) => {
 					done(err);
@@ -613,22 +662,24 @@ describe("Testing API routes", () => {
 				.expect(200)
 				.then((res) => {
 					return request
-							.post("/api/workspaces/" + labelsOtherWorkspaceId + "/labels/create")
-							.set("Content-Type", "application/json")
-							.set("Authorization", "Bearer " + token)
-							.send(label)
-							.expect(200)
-							.then((res) => {
-								done();
-							})
-							.catch((err) => {
-								done(err);
-							})
+						.post(
+							"/api/workspaces/" + labelsOtherWorkspaceId + "/labels/create"
+						)
+						.set("Content-Type", "application/json")
+						.set("Authorization", "Bearer " + token)
+						.send(label)
+						.expect(200)
+						.then((res) => {
+							done();
+						})
+						.catch((err) => {
+							done(err);
+						});
 				})
 				.catch((err) => {
 					done(err);
 				});
-		})
+		});
 
 		it("Create a new label successfully", (done) => {
 			request
@@ -694,65 +745,123 @@ describe("Testing API routes", () => {
 
 		it("Rename label without authentication", (done) => {
 			request
-				.put("/api/workspaces/" + labelsWorkspaceId + "/labels/" + labelId + "/rename")
-				.query({labelName: renamedLabelName})
+				.put(
+					"/api/workspaces/" +
+						labelsWorkspaceId +
+						"/labels/" +
+						labelId +
+						"/rename"
+				)
+				.query({ labelName: renamedLabelName })
 				.expect(401, done);
 		});
 
 		it("Rename label of a non-existing workspace", (done) => {
 			request
-				.put("/api/workspaces/" + nonExistingWorkspaceId + "/labels/" + labelId + "/rename")
+				.put(
+					"/api/workspaces/" +
+						nonExistingWorkspaceId +
+						"/labels/" +
+						labelId +
+						"/rename"
+				)
 				.set("Authorization", "Bearer " + token)
-				.query({labelName: renamedLabelName})
+				.query({ labelName: renamedLabelName })
 				.expect(400)
 				.then((res) => {
-					expect(res.text).to.be.a("string").that.equals("Workspace with given id does not exist");
+					expect(res.text)
+						.to.be.a("string")
+						.that.equals("Workspace with given id does not exist");
 					done();
 				})
 				.catch((err) => {
 					done(err);
-				})
+				});
 		});
 
 		it("Rename a non-existing label", (done) => {
 			request
-				.put("/api/workspaces/" + labelsWorkspaceId + "/labels/" + nonExistingLabelId + "/rename")
+				.put(
+					"/api/workspaces/" +
+						labelsWorkspaceId +
+						"/labels/" +
+						nonExistingLabelId +
+						"/rename"
+				)
 				.set("Authorization", "Bearer " + token)
-				.query({labelName: renamedLabelName})
+				.query({ labelName: renamedLabelName })
 				.expect(400)
 				.then((res) => {
-					expect(res.text).to.be.a("string").that.equals("Label with given id does not exist");
+					expect(res.text)
+						.to.be.a("string")
+						.that.equals("Label with given id does not exist");
 					done();
 				})
 				.catch((err) => {
 					done(err);
-				})
+				});
 		});
 
 		it("Rename a label that doesn't belong to the workspace", (done) => {
 			request
-				.put("/api/workspaces/" + labelsOtherWorkspaceId + "/labels/" + labelId + "/rename")
+				.put(
+					"/api/workspaces/" +
+						labelsOtherWorkspaceId +
+						"/labels/" +
+						labelId +
+						"/rename"
+				)
 				.set("Authorization", "Bearer " + token)
-				.query({labelName: renamedLabelName})
+				.query({ labelName: renamedLabelName })
 				.expect(400)
 				.then((res) => {
-					expect(res.text).to.be.a("string").that.equals("Label with given id does not belong to the workspace");
+					expect(res.text)
+						.to.be.a("string")
+						.that.equals(
+							"Label with given id does not belong to the workspace"
+						);
 					done();
 				})
 				.catch((err) => {
 					done(err);
+				});
+		});
+
+		it("Rename label without name", (done) => {
+			request
+				.put(
+					"/api/workspaces/" +
+						labelsWorkspaceId +
+						"/labels/" +
+						labelId +
+						"/rename"
+				)
+				.set("Authorization", "Bearer " + token)
+				.query({ labelName: "" })
+				.expect(400)
+				.then((res) => {
+					expect(res.text).to.be.equal("Name is invalid");
+					done();
 				})
+				.catch((err) => {
+					done(err);
+				});
 		});
 
 		it("Rename successfully", (done) => {
 			request
-				.put("/api/workspaces/" + labelsWorkspaceId + "/labels/" + labelId + "/rename")
+				.put(
+					"/api/workspaces/" +
+						labelsWorkspaceId +
+						"/labels/" +
+						labelId +
+						"/rename"
+				)
 				.set("Authorization", "Bearer " + token)
-				.query({labelName: renamedLabelName})
+				.query({ labelName: renamedLabelName })
 				.expect(200, done);
 		});
 	});
-
 
 	describe("PUT /api/workspaces/:workspaceId/labels/:labelId/describe", () => {
 		before("Create a workspace", (done) => {
@@ -808,66 +917,509 @@ describe("Testing API routes", () => {
 
 		it("Describe label without authentication", (done) => {
 			request
-				.put("/api/workspaces/" + labelsWorkspaceId + "/labels/" + labelId + "/describe")
-				.query({description: labelDescription})
+				.put(
+					"/api/workspaces/" +
+						labelsWorkspaceId +
+						"/labels/" +
+						labelId +
+						"/describe"
+				)
+				.query({ description: labelDescription })
 				.expect(401, done);
 		});
 
 		it("Describe label of a non-existing workspace", (done) => {
 			request
-				.put("/api/workspaces/" + nonExistingWorkspaceId + "/labels/" + labelId + "/describe")
+				.put(
+					"/api/workspaces/" +
+						nonExistingWorkspaceId +
+						"/labels/" +
+						labelId +
+						"/describe"
+				)
 				.set("Authorization", "Bearer " + token)
-				.query({description: labelDescription})
+				.query({ description: labelDescription })
 				.expect(400)
 				.then((res) => {
-					expect(res.text).to.be.a("string").that.equals("Workspace with given id does not exist");
+					expect(res.text)
+						.to.be.a("string")
+						.that.equals("Workspace with given id does not exist");
 					done();
 				})
 				.catch((err) => {
 					done(err);
-				})
+				});
 		});
 
 		it("Describe a non-existing label", (done) => {
 			request
-				.put("/api/workspaces/" + labelsWorkspaceId + "/labels/" + nonExistingLabelId + "/describe")
+				.put(
+					"/api/workspaces/" +
+						labelsWorkspaceId +
+						"/labels/" +
+						nonExistingLabelId +
+						"/describe"
+				)
 				.set("Authorization", "Bearer " + token)
-				.query({description: labelDescription})
+				.query({ description: labelDescription })
 				.expect(400)
 				.then((res) => {
-					expect(res.text).to.be.a("string").that.equals("Label with given id does not exist");
+					expect(res.text)
+						.to.be.a("string")
+						.that.equals("Label with given id does not exist");
 					done();
 				})
 				.catch((err) => {
 					done(err);
-				})
+				});
 		});
 
 		it("Describe a label that doesn't belong to the workspace", (done) => {
 			request
-				.put("/api/workspaces/" + labelsOtherWorkspaceId + "/labels/" + labelId + "/describe")
+				.put(
+					"/api/workspaces/" +
+						labelsOtherWorkspaceId +
+						"/labels/" +
+						labelId +
+						"/describe"
+				)
 				.set("Authorization", "Bearer " + token)
-				.query({description: labelDescription})
+				.query({ description: labelDescription })
 				.expect(400)
 				.then((res) => {
-					expect(res.text).to.be.a("string").that.equals("Label with given id does not belong to the workspace");
+					expect(res.text)
+						.to.be.a("string")
+						.that.equals(
+							"Label with given id does not belong to the workspace"
+						);
 					done();
 				})
 				.catch((err) => {
 					done(err);
+				});
+		});
+
+		it("Describe label without description", (done) => {
+			request
+				.put(
+					"/api/workspaces/" +
+						labelsWorkspaceId +
+						"/labels/" +
+						labelId +
+						"/describe"
+				)
+				.set("Authorization", "Bearer " + token)
+				.query({ description: "" })
+				.expect(400)
+				.then((res) => {
+					expect(res.text).to.be.equal("Description is invalid");
+					done();
 				})
+				.catch((err) => {
+					done(err);
+				});
 		});
 
 		it("Describe successfully", (done) => {
 			request
-				.put("/api/workspaces/" + labelsWorkspaceId + "/labels/" + labelId + "/describe")
+				.put(
+					"/api/workspaces/" +
+						labelsWorkspaceId +
+						"/labels/" +
+						labelId +
+						"/describe"
+				)
 				.set("Authorization", "Bearer " + token)
-				.query({description: labelDescription})
+				.query({ description: labelDescription })
 				.expect(200, done);
 		});
 	});
 
 	describe("GET /api/workspaces/:workspaceId/labels", () => {
+		before("Create a workspace", (done) => {
+			request
+				.post("/api/workspaces/create")
+				.set("Content-Type", "application/json")
+				.set("Authorization", "Bearer " + token)
+				.send(validWorkspace)
+				.expect(200)
+				.then((res) => {
+					expect(res.body).to.be.a("string");
+					labelsWorkspaceId = res.body;
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				});
+		});
 
+		before("Create another workspace", (done) => {
+			request
+				.post("/api/workspaces/create")
+				.set("Content-Type", "application/json")
+				.set("Authorization", "Bearer " + token)
+				.send(validWorkspace)
+				.expect(200)
+				.then((res) => {
+					expect(res.body).to.be.a("string");
+					labelsOtherWorkspaceId = res.body;
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				});
+		});
+
+		before("Create a label for the workspace", (done) => {
+			request
+				.post("/api/workspaces/" + labelsWorkspaceId + "/labels/create")
+				.set("Content-Type", "application/json")
+				.set("Authorization", "Bearer " + token)
+				.send(label)
+				.expect(200)
+				.then((res) => {
+					expect(res.body).to.be.a("string");
+					labelId = res.body;
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				});
+		});
+
+		it("Without authentication", (done) => {
+			request
+				.get("/api/workspaces/" + labelsWorkspaceId + "/labels")
+				.expect(401, done);
+		});
+
+		it("Retrieve labels of a non-existing workspace", (done) => {
+			request
+				.get("/api/workspaces/" + nonExistingWorkspaceId + "/labels")
+				.set("Authorization", "Bearer " + token)
+				.expect(400, done);
+		});
+
+		it("Retrieve labels of a workspace successfully", (done) => {
+			request
+				.get("/api/workspaces/" + labelsWorkspaceId + "/labels")
+				.set("Authorization", "Bearer " + token)
+				.expect(200)
+				.end((err, res) => {
+					expect(res.body)
+						.to.be.an("array")
+						.that.contains.something.like({
+							name: label.name,
+							labelId: labelId,
+							sampleCount: 0,
+						});
+					done(err);
+				});
+		});
+	});
+
+	describe("DELETE /api/workspaces/:workspaceId/labels/:labelId", () => {
+		before("Create a workspace", (done) => {
+			request
+				.post("/api/workspaces/create")
+				.set("Content-Type", "application/json")
+				.set("Authorization", "Bearer " + token)
+				.send(validWorkspace)
+				.expect(200)
+				.then((res) => {
+					expect(res.body).to.be.a("string");
+					labelsWorkspaceId = res.body;
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				});
+		});
+
+		before("Create another workspace", (done) => {
+			request
+				.post("/api/workspaces/create")
+				.set("Content-Type", "application/json")
+				.set("Authorization", "Bearer " + token)
+				.send(validWorkspace)
+				.expect(200)
+				.then((res) => {
+					expect(res.body).to.be.a("string");
+					labelsOtherWorkspaceId = res.body;
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				});
+		});
+
+		before("Create a label for the workspace", (done) => {
+			request
+				.post("/api/workspaces/" + labelsWorkspaceId + "/labels/create")
+				.set("Content-Type", "application/json")
+				.set("Authorization", "Bearer " + token)
+				.send(label)
+				.expect(200)
+				.then((res) => {
+					expect(res.body).to.be.a("string");
+					labelId = res.body;
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				});
+		});
+
+		it("Delete label without authentication", (done) => {
+			request
+				.delete("/api/workspaces/" + labelsWorkspaceId + "/labels/" + labelId)
+				.expect(401, done);
+		});
+
+		it("Delete non-existing label", (done) => {
+			request
+				.delete(
+					"/api/workspaces/" +
+						labelsWorkspaceId +
+						"/labels/" +
+						nonExistingLabelId
+				)
+				.set("Authorization", "Bearer " + token)
+				.expect(400, done);
+		});
+
+		it("Delete label of a non-existing workspace", (done) => {
+			request
+				.delete(
+					"/api/workspaces/" + nonExistingWorkspaceId + "/labels/" + labelId
+				)
+				.set("Authorization", "Bearer " + token)
+				.expect(400, done);
+		});
+
+		it("Delete a label that doesn't belong to the workspace", (done) => {
+			request
+				.delete(
+					"/api/workspaces/" + labelsOtherWorkspaceId + "/labels/" + labelId
+				)
+				.set("Authorization", "Bearer " + token)
+				.expect(400, done);
+		});
+
+		it("Delete successfuly", (done) => {
+			request
+				.delete("/api/workspaces/" + labelsWorkspaceId + "/labels/" + labelId)
+				.set("Authorization", "Bearer " + token)
+				.expect(200, done);
+		});
+	});
+
+	describe("SampleController related tests", () => {
+		before("Create a workspace", (done) => {
+			request
+				.post("/api/workspaces/create")
+				.set("Content-Type", "application/json")
+				.set("Authorization", "Bearer " + token)
+				.send(validWorkspace)
+				.expect(200)
+				.then((res) => {
+					expect(res.body).to.be.a("string");
+					samplesWorkspaceId = res.body;
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				});
+		});
+
+		before("Generate submission id for the workspace", (done) => {
+			request
+				.get("/api/workspaces/" + samplesWorkspaceId + "/generateSubmissionId")
+				.set("Authorization", "Bearer " + token)
+				.expect(200)
+				.then((res) => {
+					expect(res.text).to.be.a("string");
+					samplesWorkspaceSubmissionId = res.text;
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				});
+		});
+
+		before("Create another workspace", (done) => {
+			request
+				.post("/api/workspaces/create")
+				.set("Content-Type", "application/json")
+				.set("Authorization", "Bearer " + token)
+				.send(validWorkspace)
+				.expect(200)
+				.then((res) => {
+					expect(res.body).to.be.a("string");
+					samplesOtherWorkspaceId = res.body;
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				});
+		});
+
+		before("Create a label for the workspace", (done) => {
+			request
+				.post("/api/workspaces/" + samplesWorkspaceId + "/labels/create")
+				.set("Content-Type", "application/json")
+				.set("Authorization", "Bearer " + token)
+				.send(label)
+				.expect(200)
+				.then((res) => {
+					expect(res.body).to.be.a("string");
+					labelId = res.body;
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				});
+		});
+
+		before("Create a label for the other workspace", (done) => {
+			request
+				.post("/api/workspaces/" + samplesOtherWorkspaceId + "/labels/create")
+				.set("Content-Type", "application/json")
+				.set("Authorization", "Bearer " + token)
+				.send(label)
+				.expect(200)
+				.then((res) => {
+					expect(res.body).to.be.a("string");
+					otherWorkspaceLabelId = res.body;
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				});
+		});
+
+		before("Create another label for the workspace", (done) => {
+			request
+				.post("/api/workspaces/" + samplesWorkspaceId + "/labels/create")
+				.set("Content-Type", "application/json")
+				.set("Authorization", "Bearer " + token)
+				.send(otherLabel)
+				.expect(200)
+				.then((res) => {
+					expect(res.body).to.be.a("string");
+					otherLabelId = res.body;
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				});
+		});
+
+		before("Create a sample for the workspace", (done) => {
+			sample.submissionId = samplesWorkspaceSubmissionId;
+			sample.label = label.name;
+			request
+				.post("/api/submitSample")
+				.set("Content-Type", "application/json")
+				.send(sample)
+				.expect(200)
+				.then((res) => {
+					expect(res.body).to.be.a("string");
+					sampleId = res.body;
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				});
+		});
+
+		describe("GET /api/workspaces/:workspaceId/samples", () => {
+			it("Retrieve samples without authentication", (done) => {
+				request
+					.get("/api/workspaces/" + samplesWorkspaceId + "/samples")
+					.expect(401, done);
+			});
+
+			it("Retrieve samples of a non-existing workspace", (done) => {
+				request
+					.get("/api/workspaces/" + nonExistingWorkspaceId + "/samples")
+					.set("Authorization", "Bearer " + token)
+					.expect(400, done);
+			});
+
+			it("Retrieve samples without data points successfully", (done) => {
+				request
+					.get("/api/workspaces/" + samplesWorkspaceId + "/samples")
+					.set("Authorization", "Bearer " + token)
+					.query({ showDataPoints: "false" })
+					.expect(200)
+					.then((res) => {
+						expect(res.body)
+							.to.be.an("array")
+							.that.contains.something.like({
+								label: label.name,
+								sampleId: sampleId,
+							});
+						done();
+					})
+					.catch((err) => {
+						done(err);
+					});
+			});
+
+			it("Retrieve samples' last modified dates successfully", (done) => {
+				request
+					.get("/api/workspaces/" + samplesWorkspaceId + "/samples")
+					.set("Authorization", "Bearer " + token)
+					.query({ onlyDate: "true" })
+					.expect(200)
+					.then((res) => {
+						expect(res.body).to.be.a("number");
+						done();
+					})
+					.catch((err) => {
+						done(err);
+					});
+			});
+
+			it("Retrieve samples with data points successfuly", (done) => {
+				request
+					.get("/api/workspaces/" + samplesWorkspaceId + "/samples")
+					.set("Authorization", "Bearer " + token)
+					.query({ showDataPoints: "true" })
+					.expect(200)
+					.then((res) => {
+						expect(res.body)
+							.to.be.an("array")
+							.that.includes.something.like({
+								label: label.name,
+								sensorDataPoints: [
+									{
+										dataPoints: [
+											{
+												timestamp: 1609945761,
+												data: [24, 12, 113],
+											},
+											{
+												timestamp: 1609945762,
+												data: [24, 12, 123],
+											},
+										],
+									}
+								],
+								timeFrames: [
+									{
+										start: sample.start,
+										end: sample.end
+									}
+								]
+							});
+						done();
+					})
+					.catch((err) => {
+						done(err);
+					});
+			});
+		});
 	});
 });
