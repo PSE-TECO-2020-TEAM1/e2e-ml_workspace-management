@@ -4,6 +4,7 @@ export interface ILabel extends mongoose.Document {
     name: string,
     description: string,
     workspaceId: string
+    sampleCount: number
 }
 
 export const LabelSchema = new mongoose.Schema({
@@ -19,6 +20,11 @@ export const LabelSchema = new mongoose.Schema({
     },
     workspaceId: {
         type: String,
+        required: true,
+        unique: false
+    },
+    sampleCount: {
+        type: Number,
         required: true,
         unique: false
     }

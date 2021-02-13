@@ -14,10 +14,12 @@ export const getLabels = async (req: Request, res: Response) => {
     const workspace = res.locals.workspace as IWorkspace;
     const labels = await Promise.all(workspace.labelIds.map(async l => {
         const label = await Label.findById(l).exec();
+        
         return {
             labelId: l,
             name: label.name,
-            description: label.description
+            description: label.description,
+            sampleCount: label.sampleCount
         }
     }));
     res.status(200).send(labels);
@@ -31,13 +33,17 @@ export const postCreateLabel = async (req: Request, res: Response) => {
     }
     const label = {
         name: req.body.name as string,
-        workspaceId: workspace._id
+        workspaceId: workspace._id,
+        sampleCount: 0
     } as ILabel;
     const labelId = (await Label.create(label))._id;
     workspace.labelIds.push(labelId);
     workspace.save();
-    // res.sendStatus(200);
-    res.status(200).send(labelId);
+    if (process.env.NODE_ENV === "test") {
+        res.status(200).send(labelId);
+    } else {
+        res.sendStatus(200);
+    }
 }
 
 // TODO after sample part complete

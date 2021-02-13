@@ -113,11 +113,16 @@ export const postSubmitSample = async (req: Request, res: Response) => {
     } as ISample;
     
     const sampleId = (await Sample.create(sample))._id;
-
+    label.sampleCount++;
+    label.save();
     workspace.sampleIds.push(sampleId);
     workspace.lastModified = new Date();
     workspace.save();
-    res.sendStatus(200);
+    if (process.env.NODE_ENV === "test") {
+        res.status(200).send(sampleId);
+    } else {
+        res.sendStatus(200);
+    }
 }
 
 
@@ -181,6 +186,9 @@ export const putChangeTimeFrames = async (req: Request, res: Response) => {
         }
         timeFrames.push(timeframe);
         i++;
+    }
+    if (timeFrames[0].start < sample.start || timeFrames[timeFrames.length - 1].end > sample.end) {
+        return res.status(400).send("Timeframes should be between the start and end of the sample");
     }
     sample.timeFrames = timeFrames;
     sample.save();
