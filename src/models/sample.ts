@@ -17,7 +17,7 @@ const DataPointSchema = new mongoose.Schema({
         required: true,
         unique: false
     }
-});
+}, { _id: false });
 
 export interface ITimeFrame {
     start: number,
@@ -35,7 +35,7 @@ const TimeFrameSchema = new mongoose.Schema({
         required: true,
         unique: false
     }
-});
+}, { _id: false});
 
 export interface ISensorDataPoints extends mongoose.Document {
     sensorId: string // ObjectId maybe?
@@ -53,7 +53,7 @@ const SensorDataPointsSchema = new mongoose.Schema({
         required: true,
         unique: false
     },
-});
+}, { _id: false });
 
 export interface ISample extends mongoose.Document {
     start: number,
