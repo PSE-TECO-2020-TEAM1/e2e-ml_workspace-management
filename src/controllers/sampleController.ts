@@ -118,11 +118,7 @@ export const postSubmitSample = async (req: Request, res: Response) => {
     workspace.sampleIds.push(sampleId);
     workspace.lastModified = new Date();
     workspace.save();
-    if (process.env.NODE_ENV === "test") {
-        res.status(200).send(sampleId);
-    } else {
-        res.sendStatus(200);
-    }
+    res.status(200).send(sampleId);
 }
 
 export const getSample = async (req: Request, res: Response) => {

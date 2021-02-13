@@ -39,11 +39,7 @@ export const postCreateLabel = async (req: Request, res: Response) => {
     const labelId = (await Label.create(label))._id;
     workspace.labelIds.push(labelId);
     workspace.save();
-    if (process.env.NODE_ENV === "test") {
-        res.status(200).send(labelId);
-    } else {
-        res.sendStatus(200);
-    }
+    res.status(200).send(labelId);
 }
 
 // TODO after sample part complete
