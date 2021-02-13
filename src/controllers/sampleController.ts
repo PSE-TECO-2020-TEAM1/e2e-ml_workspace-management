@@ -58,7 +58,7 @@ interface PostSubmitSampleRequestBody {
 }
 
 // TODO: change to API doc, return sample id 
-// TODO: sample data points consistency check
+// TODO: sample data points consistency check, data timestamp between start-end
 export const postSubmitSample = async (req: Request, res: Response) => {
     const body = req.body as PostSubmitSampleRequestBody;
     const workspace = await Workspace.findOne({"submissionIds.hash": body.submissionId}).exec();
@@ -77,11 +77,11 @@ export const postSubmitSample = async (req: Request, res: Response) => {
         return res.status(400).send("Start time cannot be later than end time");
     }
 
-    body.sensorDataPoints.forEach(d => {
-        if (!workspace.sensors.some(s => s.sensorType.name === d.sensor)) {
+    for (const sensorDataPoint of body.sensorDataPoints) {
+        if (!workspace.sensors.some(s => s.sensorType.name === sensorDataPoint.sensor)) {
             return res.status(400).send("This sensor does not belong to the workspace");
         }
-    });
+    }
     
     let sensorDataPoints : ISensorDataPoints[] = [];
     for (const sensorDataPoint of body.sensorDataPoints) {
