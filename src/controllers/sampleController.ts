@@ -125,10 +125,17 @@ export const postSubmitSample = async (req: Request, res: Response) => {
     }
 }
 
-
-// TODO: bring to the right format
 export const getSample = async (req: Request, res: Response) => {
-    res.status(200).json(res.locals.sample);
+    const sample = res.locals.sample as ISample;
+    const label = await Label.findById(sample.labelId).exec();
+    const formattedSample = {
+        label: label.name,
+        start: sample.start,
+        end: sample.end,
+        sensorDataPoints: sample.allSensorDataPoints,
+        timeFrames: sample.timeFrames
+    }
+    res.status(200).json(formattedSample);
 }
 
 export const deleteSample = async (req: Request, res: Response) => {
@@ -188,7 +195,7 @@ export const putChangeTimeFrames = async (req: Request, res: Response) => {
         i++;
     }
     if (timeFrames[0].start < sample.start || timeFrames[timeFrames.length - 1].end > sample.end) {
-        return res.status(400).send("Timeframes should be between the start and end of the sample");
+        return res.status(400).send("Timeframes should be between the start and the end of the sample");
     }
     sample.timeFrames = timeFrames;
     sample.save();
