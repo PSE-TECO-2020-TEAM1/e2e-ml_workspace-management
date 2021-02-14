@@ -1046,6 +1046,23 @@ describe("Testing API routes", () => {
 				});
 		});
 
+		before("Create another label for the workspace", (done) => {
+			request
+				.post("/api/workspaces/" + labelsWorkspaceId + "/labels/create")
+				.set("Content-Type", "application/json")
+				.set("Authorization", "Bearer " + token)
+				.send(otherLabel)
+				.expect(200)
+				.then((res) => {
+					expect(res.body).to.be.a("string");
+					otherLabelId = res.body;
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				});
+		});
+
 		it("Rename label without authentication", (done) => {
 			request
 				.put(
@@ -1172,6 +1189,41 @@ describe("Testing API routes", () => {
 				.catch((err) => {
 					done(err);
 				});
+		});
+
+		it("Rename label with an already existing label name", (done) => {
+			request
+				.put(
+					"/api/workspaces/" +
+						labelsWorkspaceId +
+						"/labels/" +
+						labelId +
+						"/rename"
+				)
+				.set("Authorization", "Bearer " + token)
+				.query({ labelName: otherLabel.name })
+				.expect(400)
+				.then((res) => {
+					expect(res.text).to.be.equal("Cannot rename, label with same name already exists");
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				});
+		});
+
+		it("Rename label with an already existing label name", (done) => {
+			request
+				.put(
+					"/api/workspaces/" +
+						labelsWorkspaceId +
+						"/labels/" +
+						labelId +
+						"/rename"
+				)
+				.set("Authorization", "Bearer " + token)
+				.query({ labelName: label.name })
+				.expect(200, done);
 		});
 
 		it("Rename successfully", (done) => {

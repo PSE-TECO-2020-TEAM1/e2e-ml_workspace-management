@@ -64,12 +64,19 @@ export const deleteLabel = async (req: Request, res: Response) => {
     res.sendStatus(200);
 }
 
-// TODO: check existing
 export const putRenameLabel = async (req: Request, res: Response) => {
+    const workspace = res.locals.workspace as IWorkspace;
     const label = res.locals.label as ILabel;
     const newName = req.query.labelName as string;
     if (!newName || newName === '' /* || newName.length > MAX_LENGTH */) {
         return res.status(400).send("Name is invalid");
+    }
+    if (label.name === newName) {
+        return res.sendStatus(200);
+    }
+    const alreadyExisting = await Label.findOne({"name": newName, "workspaceId": workspace._id}).exec();
+    if (alreadyExisting) {
+        return res.status(400).send("Cannot rename, label with same name already exists");
     }
     label.name = newName;
     label.save();
