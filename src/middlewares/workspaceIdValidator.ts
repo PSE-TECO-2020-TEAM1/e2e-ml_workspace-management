@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 export const workspaceIdValidator = (req: Request, res: Response, next : NextFunction) => {
     const workspaceId = req.params.workspaceId as string;
     if (!mongoose.Types.ObjectId.isValid(workspaceId)) {
-        return res.status(400).send("Invalid workspace id");
+        return res.status(400).json("Invalid workspace id");
     }
     next();
 }

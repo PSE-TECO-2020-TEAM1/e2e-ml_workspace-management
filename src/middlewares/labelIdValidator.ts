@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 export const labelIdValidator = (req: Request, res: Response, next : NextFunction) => {
     const labelId = req.params.labelId as string;
     if (!mongoose.Types.ObjectId.isValid(labelId)) {
-        return res.status(400).send("Invalid label id");
+        return res.status(400).json("Invalid label id");
     }
     next();
 }

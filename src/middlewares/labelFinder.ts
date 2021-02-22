@@ -6,10 +6,10 @@ export const labelFinder = async (req: Request, res: Response, next: NextFunctio
     const workspace = res.locals.workspace as IWorkspace;
     const label = await Label.findById(req.params.labelId).exec();
 	if (!label) {
-		return res.status(400).send("Label with given id does not exist");
+		return res.status(400).json("Label with given id does not exist");
 	}
 	if (!workspace.labelIds.includes(label._id)) {
-		return res.status(400).send("Label with given id does not belong to the workspace");
+		return res.status(400).json("Label with given id does not belong to the workspace");
 	}
 	res.locals.label = label;
 	next();
