@@ -6,6 +6,9 @@ export const workspaceFinder = async (req: Request, res: Response, next: NextFun
 	if (!workspace) {
 		return res.status(400).json("Workspace with given id does not exist");
 	}
+	if (workspace.userId !== res.locals.userId) {
+		return res.sendStatus(401);
+	}
 	res.locals.workspace = workspace;
 	next();
 };
