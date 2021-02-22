@@ -63,23 +63,23 @@ export const postSubmitSample = async (req: Request, res: Response) => {
     const body = req.body as PostSubmitSampleRequestBody;
     const workspace = await Workspace.findOne({"submissionIds.hash": body.submissionId}).exec();
     if (!workspace) {
-        return res.status(400).send("No workspace matched with given submission id");
+        return res.status(400).json("No workspace matched with given submission id");
     }
 
     const label = await Label.findOne({name: body.label, workspaceId: workspace._id}).exec();
     if (!label) {
-        return res.status(400).send("This label does not exist");
+        return res.status(400).json("This label does not exist");
     }
 
     const start = body.start;
     const end = body.end;
     if (start >= end) {
-        return res.status(400).send("Start time cannot be later than end time");
+        return res.status(400).json("Start time cannot be later than end time");
     }
 
     for (const sensorDataPoint of body.sensorDataPoints) {
         if (!workspace.sensors.some(s => s.sensorType.name === sensorDataPoint.sensor)) {
-            return res.status(400).send("This sensor does not belong to the workspace");
+            return res.status(400).json("This sensor does not belong to the workspace");
         }
     }
     
@@ -90,7 +90,7 @@ export const postSubmitSample = async (req: Request, res: Response) => {
         const unmatchingFormat = dataPoints.find(d => d.data.length !== sensor.sensorType.dataFormat.length);
         
         if (unmatchingFormat) {
-            return res.status(400).send("Data format does not match the sensor's");
+            return res.status(400).json("Data format does not match the sensor's");
         }
         const formattedSensorDataPoint = {
             sensorId: sensor._id,
@@ -118,7 +118,7 @@ export const postSubmitSample = async (req: Request, res: Response) => {
     workspace.sampleIds.push(sampleId);
     workspace.lastModified = new Date();
     workspace.save();
-    res.status(200).send(sampleId);
+    res.status(200).json(sampleId);
 }
 
 export const getSample = async (req: Request, res: Response) => {
@@ -150,10 +150,10 @@ export const putRelabelSample = async (req: Request, res: Response) => {
     const labelId = req.query.labelId as string;
     const label = await Label.findById(labelId).exec();
     if (!label) {
-        return res.status(400).send("Label with given id does not exist");
+        return res.status(400).json("Label with given id does not exist");
     }
     if (!workspace.labelIds.includes(labelId)) { // change message to make it consistent with labelFinder
-        return res.status(400).send("This label does not belong to the workspace");
+        return res.status(400).json("This label does not belong to the workspace");
     }
 
     sample.labelId = labelId;
@@ -179,19 +179,19 @@ export const putChangeTimeFrames = async (req: Request, res: Response) => {
     let i = 0;
     for (const timeframe of Object.values(body)) {
         if (timeframe.start >= timeframe.end) {
-            return res.status(400).send("Timeframe start should be earlier than end");
+            return res.status(400).json("Timeframe start should be earlier than end");
         }
         if (i > 0 && timeFrames[i-1].start >= timeframe.start) {
-            return res.status(400).send("Timeframes are not sorted");
+            return res.status(400).json("Timeframes are not sorted");
         }
         if (i > 0 && timeFrames[i-1].end >= timeframe.start) {
-            return res.status(400).send("Timeframes should not be intersecting with each other");
+            return res.status(400).json("Timeframes should not be intersecting with each other");
         }
         timeFrames.push(timeframe);
         i++;
     }
     if (timeFrames[0].start < sample.start || timeFrames[timeFrames.length - 1].end > sample.end) {
-        return res.status(400).send("Timeframes should be between the start and the end of the sample");
+        return res.status(400).json("Timeframes should be between the start and the end of the sample");
     }
     sample.timeFrames = timeFrames;
     sample.save();

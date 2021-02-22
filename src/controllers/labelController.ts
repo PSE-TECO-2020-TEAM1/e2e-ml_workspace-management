@@ -22,14 +22,14 @@ export const getLabels = async (req: Request, res: Response) => {
             sampleCount: label.sampleCount
         }
     }));
-    res.status(200).send(labels);
+    res.status(200).json(labels);
 }
 
 export const postCreateLabel = async (req: Request, res: Response) => {
     const workspace = res.locals.workspace as IWorkspace;
     const alreadyExisting = await Label.findOne({"name": req.body.name, "workspaceId": workspace._id}).exec();
     if (alreadyExisting) {
-        return res.status(400).send("Label already exists");
+        return res.status(400).json("Label already exists");
     }
     const label = {
         name: req.body.name as string,
@@ -39,7 +39,7 @@ export const postCreateLabel = async (req: Request, res: Response) => {
     const labelId = (await Label.create(label))._id;
     workspace.labelIds.push(labelId);
     workspace.save();
-    res.status(200).send(labelId);
+    res.status(200).json(labelId);
 }
 
 // TODO after sample part complete
@@ -69,14 +69,14 @@ export const putRenameLabel = async (req: Request, res: Response) => {
     const label = res.locals.label as ILabel;
     const newName = req.query.labelName as string;
     if (!newName || newName === '' /* || newName.length > MAX_LENGTH */) {
-        return res.status(400).send("Name is invalid");
+        return res.status(400).json("Name is invalid");
     }
     if (label.name === newName) {
         return res.sendStatus(200);
     }
     const alreadyExisting = await Label.findOne({"name": newName, "workspaceId": workspace._id}).exec();
     if (alreadyExisting) {
-        return res.status(400).send("Cannot rename, label with same name already exists");
+        return res.status(400).json("Cannot rename, label with same name already exists");
     }
     label.name = newName;
     label.save();
@@ -87,7 +87,7 @@ export const putDescribeLabel = async (req: Request, res: Response) => {
     const label = res.locals.label as ILabel;
     const description = req.query.description as string;
     if (!description || description === '' /* || description.length > MAX_LENGTH */) {
-        return res.status(400).send("Description is invalid");
+        return res.status(400).json("Description is invalid");
     }
     label.description = description;
     label.save();

@@ -58,17 +58,17 @@ export const postCreateWorkspace = async (req: Request, res: Response) => {
     for (const sensor of body.sensors) {
         const sensorType = SENSOR_TYPES.find(t => t.name === sensor.sensorName); 
         if (!sensorType) {
-            return res.status(400).send("Invalid sensor type");
+            return res.status(400).json("Invalid sensor type");
         }
         if (sensorType.maxSamplingRate < sensor.samplingRate) {
-            return res.status(400).send("Invalid sensor sampling rate");
+            return res.status(400).json("Invalid sensor sampling rate");
         }
         sensors.push({sensorType:sensorType, samplingRate:sensor.samplingRate});
     }
     for (const type of SENSOR_TYPES) {
         const countType = sensors.filter(s => s.sensorType.name === type.name).length;
         if (countType > 1) {
-            return res.status(400).send("Cannot create workspace with duplicate sensors");
+            return res.status(400).json("Cannot create workspace with duplicate sensors");
         }
     }
     const workspace = await Workspace.create({
@@ -131,7 +131,7 @@ export const getGenerateSubmissionId = async (req: Request, res: Response) => {
     } as ISubmissionId;
     workspace.submissionIds.push(submissionId);
     workspace.save(); // maybe await here
-    res.status(200).send(submissionId.hash);
+    res.status(200).json(submissionId.hash);
 }
 
 interface GetSubmissionConfigResponseBody {
@@ -150,7 +150,7 @@ export const getSubmissionConfig = async (req: Request, res: Response) => {
     const submissionId = req.query.submissionId;
     const workspace = await Workspace.findOne({"submissionIds.hash": submissionId}).exec();
     if (!workspace) {
-        return res.status(400).send("Workspace with given submission id does not exist");
+        return res.status(400).json("Workspace with given submission id does not exist");
     }
     const formattedSensors = workspace.sensors.map(s => ({
         name: s.sensorType.name,
