@@ -52,8 +52,7 @@ const SensorDataPointsSchema = new mongoose.Schema({
     sensorName: {
         type: String,
         required: true,
-        unique: true,
-        sparse: true
+        unique: false,
     },
     dataPoints: {
         type: [DataPointSchema],
