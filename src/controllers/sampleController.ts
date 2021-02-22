@@ -94,6 +94,7 @@ export const postSubmitSample = async (req: Request, res: Response) => {
         }
         const formattedSensorDataPoint = {
             sensorId: sensor._id,
+            sensorName: sensor.sensorType.name,
             dataPoints: dataPoints
         } as ISensorDataPoints
         sensorDataPoints.push(formattedSensorDataPoint);

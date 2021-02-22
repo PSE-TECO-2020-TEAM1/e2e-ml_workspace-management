@@ -38,7 +38,8 @@ const TimeFrameSchema = new mongoose.Schema({
 }, { _id: false});
 
 export interface ISensorDataPoints extends mongoose.Document {
-    sensorId: string // ObjectId maybe?
+    sensorId: string, // ObjectId maybe?
+    sensorName: string,
     dataPoints: IDataPoint[]
 }
 
@@ -47,6 +48,12 @@ const SensorDataPointsSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: false
+    },
+    sensorName: {
+        type: String,
+        required: true,
+        unique: true,
+        sparse: true
     },
     dataPoints: {
         type: [DataPointSchema],
