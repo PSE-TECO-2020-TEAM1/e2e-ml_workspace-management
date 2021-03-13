@@ -191,7 +191,8 @@ export const putChangeTimeFrames = async (req: Request, res: Response) => {
         timeFrames.push(timeframe);
         i++;
     }
-    if (timeFrames[0].start < sample.start || timeFrames[timeFrames.length - 1].end > sample.end) {
+    // No timeframe is set
+    if (i != 0 && (timeFrames[0].start < sample.start || timeFrames[timeFrames.length - 1].end > sample.end )) {
         return res.status(400).json("Timeframes should be between the start and the end of the sample");
     }
     sample.timeFrames = timeFrames;
