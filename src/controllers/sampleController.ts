@@ -138,8 +138,11 @@ export const getSample = async (req: Request, res: Response) => {
 export const deleteSample = async (req: Request, res: Response) => {
     const sample = res.locals.sample as ISample;
     const workspace = res.locals.workspace as IWorkspace;
+    const label = await Label.findById(sample.labelId).exec();
     workspace.lastModified = new Date();
     workspace.sampleIds = workspace.sampleIds.filter(s => s !== sample._id.toString());
+    label.sampleCount--;
+    label.save();
     sample.remove();
     workspace.save();
     res.sendStatus(200);
@@ -149,10 +152,15 @@ export const putRelabelSample = async (req: Request, res: Response) => {
     const sample = res.locals.sample as ISample;
     const workspace = res.locals.workspace as IWorkspace;
     const labelName = req.query.label as string;
-    const label = await Label.findOne({name: labelName, workspaceId: workspace._id});
+    const label = await Label.findOne({name: labelName, workspaceId: workspace._id}).exec();
     if (!label) {
         return res.status(400).json("Label with does not exist in the workspace");
     }
+    const oldLabel = await Label.findById(sample.labelId).exec();
+    oldLabel.sampleCount--;
+    oldLabel.save();
+    label.sampleCount++;
+    label.save();
     sample.labelId = label._id;
     sample.save();
     workspace.lastModified = new Date();
