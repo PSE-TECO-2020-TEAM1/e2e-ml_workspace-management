@@ -86,7 +86,7 @@ export const putRenameLabel = async (req: Request, res: Response) => {
 export const putDescribeLabel = async (req: Request, res: Response) => {
     const label = res.locals.label as ILabel;
     const description = req.body.description as string;
-    if (!description || description === '' /* || description.length > MAX_LENGTH */) {
+    if (typeof description === 'undefined') {
         return res.status(400).json("Description is invalid");
     }
     label.description = description;
