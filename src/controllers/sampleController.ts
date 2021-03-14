@@ -176,24 +176,22 @@ export const putChangeTimeFrames = async (req: Request, res: Response) => {
     const sample = res.locals.sample as ISample;
     const workspace = res.locals.workspace as IWorkspace;
     const body = req.body as PutChangeTimeFramesBody;
-    let timeFrames: ITimeFrame[] = [];
-    let i = 0;
-    for (const timeframe of Object.values(body)) {
-        if (timeframe.start >= timeframe.end) {
+    let timeFrames: ITimeFrame[] = Object.values(body);
+    timeFrames.sort((a, b) => {
+        if (a.start === b.start) return a.end - b.end;
+        return a.start - b.start;
+    })
+
+    if (timeFrames[0].start < sample.start || timeFrames[timeFrames.length - 1].end > sample.end ) {
+        return res.status(400).json("Timeframes should be between the start and the end of the sample");
+    }
+    for (let i = 0; i < timeFrames.length; ++i) {
+        if (timeFrames[i].start >= timeFrames[i].end) {
             return res.status(400).json("Timeframe start should be earlier than end");
         }
-        if (i > 0 && timeFrames[i-1].start >= timeframe.start) {
-            return res.status(400).json("Timeframes are not sorted");
-        }
-        if (i > 0 && timeFrames[i-1].end >= timeframe.start) {
+        if (i > 0 && timeFrames[i-1].end >= timeFrames[i].start) {
             return res.status(400).json("Timeframes should not be intersecting with each other");
         }
-        timeFrames.push(timeframe);
-        i++;
-    }
-    // No timeframe is set
-    if (i != 0 && (timeFrames[0].start < sample.start || timeFrames[timeFrames.length - 1].end > sample.end )) {
-        return res.status(400).json("Timeframes should be between the start and the end of the sample");
     }
     sample.timeFrames = timeFrames;
     sample.save();
