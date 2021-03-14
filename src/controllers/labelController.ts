@@ -67,7 +67,7 @@ export const deleteLabel = async (req: Request, res: Response) => {
 export const putRenameLabel = async (req: Request, res: Response) => {
     const workspace = res.locals.workspace as IWorkspace;
     const label = res.locals.label as ILabel;
-    const newName = req.query.labelName as string;
+    const newName = req.body.name as string;
     if (!newName || newName === '' /* || newName.length > MAX_LENGTH */) {
         return res.status(400).json("Name is invalid");
     }
