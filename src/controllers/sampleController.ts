@@ -148,16 +148,12 @@ export const deleteSample = async (req: Request, res: Response) => {
 export const putRelabelSample = async (req: Request, res: Response) => {
     const sample = res.locals.sample as ISample;
     const workspace = res.locals.workspace as IWorkspace;
-    const labelId = req.query.labelId as string;
-    const label = await Label.findById(labelId).exec();
+    const labelName = req.query.label as string;
+    const label = await Label.findOne({name: labelName, workspaceId: workspace._id});
     if (!label) {
-        return res.status(400).json("Label with given id does not exist");
+        return res.status(400).json("Label with does not exist in the workspace");
     }
-    if (!workspace.labelIds.includes(labelId)) { // change message to make it consistent with labelFinder
-        return res.status(400).json("This label does not belong to the workspace");
-    }
-
-    sample.labelId = labelId;
+    sample.labelId = label._id;
     sample.save();
     workspace.lastModified = new Date();
     workspace.save();
