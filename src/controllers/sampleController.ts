@@ -178,7 +178,7 @@ export const putChangeTimeFrames = async (req: Request, res: Response) => {
     const body = req.body as PutChangeTimeFramesBody;
     let timeFrames: ITimeFrame[] = Object.values(body);
     timeFrames.sort((a, b) => {
-        if (a.start === b.start) return a.end - b.end;
+        if (a.start === b.start) return a.end - b.end; //this means they're intersecting actually
         return a.start - b.start;
     })
 
