@@ -184,9 +184,9 @@ export const putChangeTimeFrames = async (req: Request, res: Response) => {
     timeFrames.sort((a, b) => {
         if (a.start === b.start) return a.end - b.end; //this means they're intersecting actually
         return a.start - b.start;
-    })
-
-    if (timeFrames[0].start < sample.start || timeFrames[timeFrames.length - 1].end > sample.end ) {
+    });
+    
+    if (timeFrames.length && (timeFrames[0].start < sample.start || timeFrames[timeFrames.length - 1].end > sample.end)) {
         return res.status(400).json("Timeframes should be between the start and the end of the sample");
     }
     for (let i = 0; i < timeFrames.length; ++i) {
