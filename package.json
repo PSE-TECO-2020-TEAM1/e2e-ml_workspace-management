@@ -18,6 +18,9 @@
     "management"
   ],
   "author": "Murat Kurnaz",
+  "contributors": [
+    "Ömer Erdinç Yağmurlu"
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/PSE-TECO-2020-TEAM1/workspace-management/issues"
