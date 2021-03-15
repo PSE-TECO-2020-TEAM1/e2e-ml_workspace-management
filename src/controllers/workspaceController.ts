@@ -1,10 +1,13 @@
 import { Request, Response } from "express"
+import request from "superagent";
+import dotenv from "dotenv"
 import Workspace, { ISubmissionId, IWorkspace } from "../models/workspace"
-import { ACCELEROMETER, GYROSCOPE, MAGNETOMETER, SensorType, SENSOR_TYPES } from "../models/sensor"
+import { SensorType, SENSOR_TYPES } from "../models/sensor"
 import Label from "../models/label";
 import crypto from "crypto";
 import { body, param, query, ValidationChain } from "express-validator";
 
+dotenv.config();
 interface RequestValidator {
     postCreateWorkspace: Array<ValidationChain>,
     putRenameWorkspace: Array<ValidationChain>
@@ -54,6 +57,12 @@ export const postCreateWorkspace = async (req: Request, res: Response) => {
         sensorType: SensorType,
         samplingRate: number
     }[] = [];
+    let formattedSensors: {
+        name: string,
+        samplingRate: number,
+        dataFormat: readonly string[]
+    }[] = [];
+
     const userId = res.locals.userId;
     for (const sensor of body.sensors) {
         const sensorType = SENSOR_TYPES.find(t => t.name === sensor.sensorName); 
@@ -64,6 +73,11 @@ export const postCreateWorkspace = async (req: Request, res: Response) => {
             return res.status(400).json("Invalid sensor sampling rate");
         }
         sensors.push({sensorType:sensorType, samplingRate:sensor.samplingRate});
+        formattedSensors.push({
+            name: sensorType.name,
+            samplingRate: sensor.samplingRate,
+            dataFormat: sensorType.dataFormat
+        });
     }
     for (const type of SENSOR_TYPES) {
         const countType = sensors.filter(s => s.sensorType.name === type.name).length;
@@ -77,6 +91,23 @@ export const postCreateWorkspace = async (req: Request, res: Response) => {
         sensors: sensors,
         lastModified: new Date()
     });
+
+    // send request to the model-management
+    const requestBody = {
+        workspaceId: workspace._id,
+        sensors: formattedSensors
+    }
+
+    request
+        .post(`localhost:${process.env.MODEL_MANAGEMENT_PORT}/api/createModelWorkspace`)
+        .set("Content-Type", "application/json")
+        .set("Authorization", req.headers.authorization.split(' ')[1])
+        .send(requestBody)
+        .catch(err => {
+            workspace.remove();
+            return res.status(400).json("Model management could not create a workspace"); 
+        })
+    
     res.status(200).json(workspace._id);
 }
 
