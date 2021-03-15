@@ -100,7 +100,7 @@ export const postCreateWorkspace = async (req: Request, res: Response) => {
 
     try {
      await request
-        .post(`localhost:${process.env.MODEL_MANAGEMENT_PORT}/api/workspaces/createModelWorkspace`)
+        .post(`${process.env.MODEL_MANAGEMENT_HOST}:${process.env.MODEL_MANAGEMENT_PORT}/api/workspaces/createModelWorkspace`)
         .set("Content-Type", "application/json")
         .set("Authorization", req.headers.authorization)
         .send(requestBody)
