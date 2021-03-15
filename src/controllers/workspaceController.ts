@@ -102,7 +102,7 @@ export const postCreateWorkspace = async (req: Request, res: Response) => {
      await request
         .post(`localhost:${process.env.MODEL_MANAGEMENT_PORT}/api/workspaces/createModelWorkspace`)
         .set("Content-Type", "application/json")
-        .set("Authorization", req.headers.authorization.split(' ')[1])
+        .set("Authorization", req.headers.authorization)
         .send(requestBody)
     } catch(err) {
         workspace.remove();
