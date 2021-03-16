@@ -45,7 +45,7 @@ interface CreateWorkspaceRequestBody {
 
 validator.postCreateWorkspace = [
     body("name").exists().isString(),
-    body("sensors").exists().isArray(),
+    body("sensors").exists().isArray().notEmpty(),
     body("sensors.*.sensorName").exists().isString(),
     body("sensors.*.samplingRate").exists().isNumeric()
 ]
@@ -69,7 +69,8 @@ export const postCreateWorkspace = async (req: Request, res: Response) => {
         if (!sensorType) {
             return res.status(400).json("Invalid sensor type");
         }
-        if (sensorType.maxSamplingRate < sensor.samplingRate) {
+        // can use more clear error messages
+        if (sensorType.maxSamplingRate < sensor.samplingRate || sensor.samplingRate <= 0) {
             return res.status(400).json("Invalid sensor sampling rate");
         }
         sensors.push({sensorType:sensorType, samplingRate:sensor.samplingRate});
