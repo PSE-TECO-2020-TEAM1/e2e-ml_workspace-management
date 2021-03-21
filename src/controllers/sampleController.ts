@@ -31,7 +31,9 @@ export const getSamples = async (req: Request, res: Response) => {
             {
             label: (await Label.findById(s.labelId)).name,
             sensorDataPoints: s.allSensorDataPoints,
-            timeFrames: s.timeFrames
+            timeFrames: s.timeFrames,
+            start: s.start,
+            end: s.end
         })));
         return res.status(200).json(formattedSamples);
     }
