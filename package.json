@@ -7,7 +7,7 @@
     "build": "tsc",
     "build-run": "tsc;node dist/app.js",
     "start": "NODE_ENV=dev nodemon -r tsconfig-paths/register src/app.ts",
-    "test": "NODE_ENV=test DATABASE=workspace-management_test nyc mocha --exit --check-leaks -r tsconfig-paths/register -r ts-node/register \"test/**/*.spec.ts\""
+    "test": "NODE_ENV=test DATABASE_CONNECTION='mongodb+srv://atlasAdmin:bZFeJA4sPJkXShJI@cluster0.adaso.mongodb.net/test-db?retryWrites=true&w=majority' nyc mocha --exit --check-leaks -r tsconfig-paths/register -r ts-node/register \"test/**/*.spec.ts\""
   },
   "repository": {
     "type": "git",
