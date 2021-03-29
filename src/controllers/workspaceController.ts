@@ -99,16 +99,16 @@ export const postCreateWorkspace = async (req: Request, res: Response) => {
         sensors: formattedSensors
     }
 
-    try {
-     await request
-        .post(`${process.env.MODEL_MANAGEMENT_HOST}:${process.env.MODEL_MANAGEMENT_PORT}/api/workspaces/createModelWorkspace`)
-        .set("Content-Type", "application/json")
-        .set("Authorization", req.headers.authorization)
-        .send(requestBody)
-    } catch(err) {
-        workspace.remove();
-        return res.status(400).json("Model management could not create a workspace"); 
-    }
+    // try {
+    //  await request
+    //     .post(`${process.env.MODEL_MANAGEMENT_HOST}:${process.env.MODEL_MANAGEMENT_PORT}/api/workspaces/createModelWorkspace`)
+    //     .set("Content-Type", "application/json")
+    //     .set("Authorization", req.headers.authorization)
+    //     .send(requestBody)
+    // } catch(err) {
+    //     workspace.remove();
+    //     return res.status(400).json("Model management could not create a workspace"); 
+    // }
     res.status(200).json(workspace._id);
 }
 

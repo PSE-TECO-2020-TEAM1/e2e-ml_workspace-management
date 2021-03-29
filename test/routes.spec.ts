@@ -478,8 +478,8 @@ describe("Testing API routes", () => {
 				.send(duplicateSensorWorkspace)
 				.expect(400)
 				.then((res) => {
-					expect(res.text).to.be.a("string");
-					expect(res.text).to.be.equal(
+					expect(res.body).to.be.a("string");
+					expect(res.body).to.be.equal(
 						"Cannot create workspace with duplicate sensors"
 					);
 					done();
@@ -497,8 +497,8 @@ describe("Testing API routes", () => {
 				.send(unsupportedSensorWorkspace)
 				.expect(400)
 				.then((res) => {
-					expect(res.text).to.be.a("string");
-					expect(res.text).to.be.equal("Invalid sensor type");
+					expect(res.body).to.be.a("string");
+					expect(res.body).to.be.equal("Invalid sensor type");
 					done();
 				})
 				.catch((err) => {
@@ -514,8 +514,8 @@ describe("Testing API routes", () => {
 				.send(invalidSensorSamplingRateWorkspace)
 				.expect(400)
 				.then((res) => {
-					expect(res.text).to.be.a("string");
-					expect(res.text).to.be.equal("Invalid sensor sampling rate");
+					expect(res.body).to.be.a("string");
+					expect(res.body).to.be.equal("Invalid sensor sampling rate");
 					done();
 				})
 				.catch((err) => {
@@ -572,7 +572,8 @@ describe("Testing API routes", () => {
 				.query({ workspaceName: "Renamed Workspace" })
 				.expect(400)
 				.then((res) => {
-					expect(res.text).to.be.equal("Invalid workspace id");
+					expect(res.body).to.be.a("string");
+					expect(res.body).to.be.equal("Invalid workspace id");
 					done();
 				})
 				.catch((err) => {
@@ -632,7 +633,19 @@ describe("Testing API routes", () => {
 			request
 				.delete("/api/workspaces/" + deletedWorkspaceId)
 				.set("Authorization", "Bearer " + token)
-				.expect(200, done);
+				.expect(200);
+			
+			request
+				.get("/api/workspaces/")
+				.set("Authorization", "Bearer " + token)
+				.expect(200)
+				.then((res) => {
+					expect(res.body).to.not.include(deletedWorkspaceId);
+					done();
+				})
+				.catch((err) => {
+					done(err);
+				})
 		});
 	});
 
@@ -729,7 +742,7 @@ describe("Testing API routes", () => {
 				.set("Authorization", "Bearer " + token)
 				.expect(200)
 				.then((res) => {
-					expect(res.text).to.be.a("string").of.length(32);
+					expect(res.body).to.be.a("string").of.length(32);
 					done();
 				})
 				.catch((err) => {
@@ -755,7 +768,7 @@ describe("Testing API routes", () => {
 						.set("Authorization", "Bearer " + token)
 						.expect(200)
 						.then((res) => {
-							submissionId = res.text;
+							submissionId = res.body;
 							done();
 						})
 						.catch((err) => {
@@ -888,18 +901,7 @@ describe("Testing API routes", () => {
 				});
 		});
 
-		beforeEach("Clear labels", async () => {
-			const l = (
-				await mongoose.connection.db
-					.listCollections({ name: "labels" })
-					.toArray()
-			).length;
-			if (l) {
-				mongoose.connection.dropCollection("labels");
-			}
-		});
-
-		after("Clear labels", async () => {
+		afterEach("Clear labels", async () => {
 			const l = (
 				await mongoose.connection.db
 					.listCollections({ name: "labels" })
@@ -942,7 +944,7 @@ describe("Testing API routes", () => {
 						.send(label)
 						.expect(400)
 						.then((res) => {
-							expect(res.text)
+							expect(res.body)
 								.to.be.a("string")
 								.that.equals("Label already exists");
 							done();
@@ -1072,7 +1074,8 @@ describe("Testing API routes", () => {
 						labelId +
 						"/rename"
 				)
-				.query({ labelName: renamedLabelName })
+				.set("Content-Type", "application/json")
+				.send({ name: renamedLabelName })
 				.expect(401, done);
 		});
 
@@ -1086,10 +1089,11 @@ describe("Testing API routes", () => {
 						"/rename"
 				)
 				.set("Authorization", "Bearer " + token)
-				.query({ labelName: renamedLabelName })
+				.set("Content-Type", "application/json")
+				.send({ name: renamedLabelName })
 				.expect(400)
 				.then((res) => {
-					expect(res.text)
+					expect(res.body)
 						.to.be.a("string")
 						.that.equals("Workspace with given id does not exist");
 					done();
@@ -1109,10 +1113,11 @@ describe("Testing API routes", () => {
 						"/rename"
 				)
 				.set("Authorization", "Bearer " + token)
-				.query({ labelName: renamedLabelName })
+				.set("Content-Type", "application/json")
+				.send({ name: renamedLabelName })
 				.expect(400)
 				.then((res) => {
-					expect(res.text)
+					expect(res.body)
 						.to.be.a("string")
 						.that.equals("Label with given id does not exist");
 					done();
@@ -1132,10 +1137,11 @@ describe("Testing API routes", () => {
 						"/rename"
 				)
 				.set("Authorization", "Bearer " + token)
-				.query({ labelName: renamedLabelName })
+				.set("Content-Type", "application/json")
+				.send({ name: renamedLabelName })
 				.expect(400)
 				.then((res) => {
-					expect(res.text)
+					expect(res.body)
 						.to.be.a("string")
 						.that.equals("Invalid label id");
 					done();
@@ -1155,10 +1161,11 @@ describe("Testing API routes", () => {
 						"/rename"
 				)
 				.set("Authorization", "Bearer " + token)
-				.query({ labelName: renamedLabelName })
+				.set("Content-Type", "application/json")
+				.send({ name: renamedLabelName })
 				.expect(400)
 				.then((res) => {
-					expect(res.text)
+					expect(res.body)
 						.to.be.a("string")
 						.that.equals(
 							"Label with given id does not belong to the workspace"
@@ -1180,10 +1187,11 @@ describe("Testing API routes", () => {
 						"/rename"
 				)
 				.set("Authorization", "Bearer " + token)
-				.query({ labelName: "" })
+				.set("Content-Type", "application/json")
+				.send({ name: "" })
 				.expect(400)
 				.then((res) => {
-					expect(res.text).to.be.equal("Name is invalid");
+					expect(res.body).to.be.equal("Name is invalid");
 					done();
 				})
 				.catch((err) => {
@@ -1201,10 +1209,11 @@ describe("Testing API routes", () => {
 						"/rename"
 				)
 				.set("Authorization", "Bearer " + token)
-				.query({ labelName: otherLabel.name })
+				.set("Content-Type", "application/json")
+				.send({ name: otherLabel.name })
 				.expect(400)
 				.then((res) => {
-					expect(res.text).to.be.equal("Cannot rename, label with same name already exists");
+					expect(res.body).to.be.equal("Cannot rename, label with same name already exists");
 					done();
 				})
 				.catch((err) => {
@@ -1222,7 +1231,8 @@ describe("Testing API routes", () => {
 						"/rename"
 				)
 				.set("Authorization", "Bearer " + token)
-				.query({ labelName: label.name })
+				.set("Content-Type", "application/json")
+				.send({ name: label.name })
 				.expect(200, done);
 		});
 
@@ -1236,7 +1246,8 @@ describe("Testing API routes", () => {
 						"/rename"
 				)
 				.set("Authorization", "Bearer " + token)
-				.query({ labelName: renamedLabelName })
+				.set("Content-Type", "application/json")
+				.send({ name: renamedLabelName })
 				.expect(200, done);
 		});
 	});
@@ -1302,7 +1313,8 @@ describe("Testing API routes", () => {
 						labelId +
 						"/describe"
 				)
-				.query({ description: labelDescription })
+				.set("Content-Type", "application/json")
+				.send({ description: labelDescription })
 				.expect(401, done);
 		});
 
@@ -1316,10 +1328,11 @@ describe("Testing API routes", () => {
 						"/describe"
 				)
 				.set("Authorization", "Bearer " + token)
-				.query({ description: labelDescription })
+				.set("Content-Type", "application/json")
+				.send({ description: labelDescription })
 				.expect(400)
 				.then((res) => {
-					expect(res.text)
+					expect(res.body)
 						.to.be.a("string")
 						.that.equals("Workspace with given id does not exist");
 					done();
@@ -1339,10 +1352,11 @@ describe("Testing API routes", () => {
 						"/describe"
 				)
 				.set("Authorization", "Bearer " + token)
-				.query({ description: labelDescription })
+				.set("Content-Type", "application/json")
+				.send({ description: labelDescription })
 				.expect(400)
 				.then((res) => {
-					expect(res.text)
+					expect(res.body)
 						.to.be.a("string")
 						.that.equals("Label with given id does not exist");
 					done();
@@ -1362,10 +1376,11 @@ describe("Testing API routes", () => {
 						"/describe"
 				)
 				.set("Authorization", "Bearer " + token)
-				.query({ description: labelDescription })
+				.set("Content-Type", "application/json")
+				.send({ description: labelDescription })
 				.expect(400)
 				.then((res) => {
-					expect(res.text)
+					expect(res.body)
 						.to.be.a("string")
 						.that.equals(
 							"Label with given id does not belong to the workspace"
@@ -1387,10 +1402,11 @@ describe("Testing API routes", () => {
 						"/describe"
 				)
 				.set("Authorization", "Bearer " + token)
-				.query({ description: "" })
+				.set("Content-Type", "application/json")
+				.send({ desc: "" })
 				.expect(400)
 				.then((res) => {
-					expect(res.text).to.be.equal("Description is invalid");
+					expect(res.body).to.be.equal("Description is invalid");
 					done();
 				})
 				.catch((err) => {
@@ -1408,7 +1424,8 @@ describe("Testing API routes", () => {
 						"/describe"
 				)
 				.set("Authorization", "Bearer " + token)
-				.query({ description: labelDescription })
+				.set("Content-Type", "application/json")
+				.send({ description: labelDescription })
 				.expect(200, done);
 		});
 	});
@@ -1484,6 +1501,7 @@ describe("Testing API routes", () => {
 				.set("Authorization", "Bearer " + token)
 				.expect(200)
 				.end((err, res) => {
+					// TODO: make other array checks also like this
 					expect(res.body).to.be.an("array").that.contains.something.like({
 						name: label.name,
 						labelId: labelId,
@@ -1518,8 +1536,8 @@ describe("Testing API routes", () => {
 				.set("Authorization", "Bearer " + token)
 				.expect(200)
 				.then((res) => {
-					expect(res.text).to.be.a("string");
-					labelsWorkspaceSubmissionId = res.text;
+					expect(res.body).to.be.a("string");
+					labelsWorkspaceSubmissionId = res.body;
 					done();
 				})
 				.catch((err) => {
@@ -1569,7 +1587,6 @@ describe("Testing API routes", () => {
 				.send(labelDeleteSample)
 				.expect(200)
 				.then((res) => {
-					// console.log(res);
 					expect(res.body).to.be.a("string");
 					labelDeleteSampleId = res.body;
 					done();
@@ -1647,8 +1664,8 @@ describe("Testing API routes", () => {
 				.set("Authorization", "Bearer " + token)
 				.expect(200)
 				.then((res) => {
-					expect(res.text).to.be.a("string");
-					samplesWorkspaceSubmissionId = res.text;
+					expect(res.body).to.be.a("string");
+					samplesWorkspaceSubmissionId = res.body;
 					done();
 				})
 				.catch((err) => {
@@ -1679,8 +1696,8 @@ describe("Testing API routes", () => {
 				.set("Authorization", "Bearer " + token)
 				.expect(200)
 				.then((res) => {
-					expect(res.text).to.be.a("string");
-					samplesOtherWorkspaceSubmissionId = res.text;
+					expect(res.body).to.be.a("string");
+					samplesOtherWorkspaceSubmissionId = res.body;
 					done();
 				})
 				.catch((err) => {
@@ -1855,7 +1872,7 @@ describe("Testing API routes", () => {
 					.set("Authorization", "Bearer " + token)
 					.expect(400)
 					.then((res) => {
-						expect(res.text).to.be.a("string").that.equals("Invalid sample id");
+						expect(res.body).to.be.a("string").that.equals("Invalid sample id");
 						done();
 					})
 					.catch((err) => {
@@ -1869,7 +1886,7 @@ describe("Testing API routes", () => {
 					.set("Authorization", "Bearer " + token)
 					.expect(400)
 					.then((res) => {
-						expect(res.text).to.be.a("string").that.equals("Sample with given id does not exist");
+						expect(res.body).to.be.a("string").that.equals("Sample with given id does not exist");
 						done();
 					})
 					.catch((err) => {
@@ -1883,7 +1900,7 @@ describe("Testing API routes", () => {
 					.set("Authorization", "Bearer " + token)
 					.expect(400)
 					.then((res) => {
-						expect(res.text).to.be.a("string").that
+						expect(res.body).to.be.a("string").that
 							.equals("Sample with given id does not belong to the workspace");
 						done();
 					})
@@ -1911,7 +1928,7 @@ describe("Testing API routes", () => {
 			it("Relabel without authentication", (done) => {
 				request
 					.put("/api/workspaces/" + samplesWorkspaceId + "/samples/" + sampleId + "/relabel")
-					.query({labelId: labelId})
+					.query({label: label.name})
 					.expect(401, done);
 			});
 
@@ -1919,10 +1936,10 @@ describe("Testing API routes", () => {
 				request
 					.put("/api/workspaces/" + samplesWorkspaceId + "/samples/" + sampleId + "/relabel")
 					.set("Authorization", "Bearer " + token)
-					.query({labelId: nonExistingLabelId})
+					.query({label: "THIS_LABEL_DOES_NOT_EXIST"})
 					.expect(400)
 					.then((res) => {
-						expect(res.text).to.be.a("string").that.equals("Label with given id does not exist");
+						expect(res.body).to.be.a("string").that.equals("Label does not exist in the workspace");
 						done();
 					})
 					.catch((err) => {
@@ -1930,26 +1947,26 @@ describe("Testing API routes", () => {
 					});
 			})
 
-			it("Relabel with a label belonging to another workspace", (done) => {
-				request
-					.put("/api/workspaces/" + samplesWorkspaceId + "/samples/" + sampleId + "/relabel")
-					.set("Authorization", "Bearer " + token)
-					.query({labelId: otherWorkspaceLabelId})
-					.expect(400)
-					.then((res) => {
-						expect(res.text).to.be.a("string").that.equals("This label does not belong to the workspace");
-						done();
-					})
-					.catch((err) => {
-						done(err);
-					});
-			})
+			// it("Relabel with a label belonging to another workspace", (done) => {
+			// 	request
+			// 		.put("/api/workspaces/" + samplesWorkspaceId + "/samples/" + sampleId + "/relabel")
+			// 		.set("Authorization", "Bearer " + token)
+			// 		.query({label: label.name})
+			// 		.expect(400)
+			// 		.then((res) => {
+			// 			expect(res.body).to.be.a("string").that.equals("Label does not exist in the workspace");
+			// 			done();
+			// 		})
+			// 		.catch((err) => {
+			// 			done(err);
+			// 		});
+			// })
 
 			it("Relabel successfully", (done) => {
 				request
 					.put("/api/workspaces/" + samplesWorkspaceId + "/samples/" + sampleId + "/relabel")
 					.set("Authorization", "Bearer " + token)
-					.query({labelId: labelId})
+					.query({label: label.name})
 					.expect(200, done);
 			});
 		});
@@ -1970,7 +1987,7 @@ describe("Testing API routes", () => {
 				.send(timeframeStartLaterThanEnd)
 				.expect(400)
 				.then((res) => {
-					expect(res.text).to.be.equal("Timeframe start should be earlier than end")
+					expect(res.body).to.be.equal("Timeframe start should be earlier than end")
 					done();
 				})
 				.catch((err) => {
@@ -1978,21 +1995,21 @@ describe("Testing API routes", () => {
 				});
 			});
 
-			it("Update with not sorted timeframes", (done) => {
-				request
-				.put("/api/workspaces/" + samplesWorkspaceId + "/samples/" + sampleId + "/timeframes")
-				.set("Authorization", "Bearer " + token)
-				.set("Content-Type", "application/json")
-				.send(timeframesNotSorted)
-				.expect(400)
-				.then((res) => {
-					expect(res.text).to.be.equal("Timeframes are not sorted")
-					done();
-				})
-				.catch((err) => {
-					done(err);
-				});
-			});
+			// it("Update with not sorted timeframes", (done) => {
+			// 	request
+			// 	.put("/api/workspaces/" + samplesWorkspaceId + "/samples/" + sampleId + "/timeframes")
+			// 	.set("Authorization", "Bearer " + token)
+			// 	.set("Content-Type", "application/json")
+			// 	.send(timeframesNotSorted)
+			// 	.expect(400)
+			// 	.then((res) => {
+			// 		expect(res.body).to.be.equal("Timeframes are not sorted")
+			// 		done();
+			// 	})
+			// 	.catch((err) => {
+			// 		done(err);
+			// 	});
+			// });
 
 			it("Update with intersecting timeframes", (done) => {
 				request
@@ -2002,7 +2019,7 @@ describe("Testing API routes", () => {
 				.send(timeframesIntersecting)
 				.expect(400)
 				.then((res) => {
-					expect(res.text).to.be.equal("Timeframes should not be intersecting with each other")
+					expect(res.body).to.be.equal("Timeframes should not be intersecting with each other")
 					done();
 				})
 				.catch((err) => {
@@ -2018,7 +2035,7 @@ describe("Testing API routes", () => {
 				.send(timeframeNotBetweenSampleStartEnd)
 				.expect(400)
 				.then((res) => {
-					expect(res.text).to.be.equal("Timeframes should be between the start and the end of the sample")
+					expect(res.body).to.be.equal("Timeframes should be between the start and the end of the sample")
 					done();
 				})
 				.catch((err) => {
@@ -2059,7 +2076,7 @@ describe("Testing API routes", () => {
 					.send(sampleNonExistingSubmissionId)
 					.expect(400)
 					.then((res) => {
-						expect(res.text).to.be.equal("No workspace matched with given submission id");
+						expect(res.body).to.be.equal("No workspace matched with given submission id");
 						done();
 					})
 					.catch((err) => {
@@ -2074,7 +2091,7 @@ describe("Testing API routes", () => {
 					.send(sampleNonExistingLabel)
 					.expect(400)
 					.then((res) => {
-						expect(res.text).to.be.equal("This label does not exist");
+						expect(res.body).to.be.equal("This label does not exist");
 						done();
 					})
 					.catch((err) => {
@@ -2089,7 +2106,7 @@ describe("Testing API routes", () => {
 					.send(sampleStartTimeLaterThanEnd)
 					.expect(400)
 					.then((res) => {
-						expect(res.text).to.be.equal("Start time cannot be later than end time");
+						expect(res.body).to.be.equal("Start time cannot be later than end time");
 						done();
 					})
 					.catch((err) => {
@@ -2104,7 +2121,7 @@ describe("Testing API routes", () => {
 					.send(sampleNonExistingSensor)
 					.expect(400)
 					.then((res) => {
-						expect(res.text).to.be.equal("This sensor does not belong to the workspace");
+						expect(res.body).to.be.equal("This sensor does not belong to the workspace");
 						done();
 					})
 					.catch((err) => {
@@ -2119,7 +2136,7 @@ describe("Testing API routes", () => {
 					.send(sampleWrongDataFormat)
 					.expect(400)
 					.then((res) => {
-						expect(res.text).to.be.equal("Data format does not match the sensor's");
+						expect(res.body).to.be.equal("Data format does not match the sensor's");
 						done();
 					})
 					.catch((err) => {

@@ -156,7 +156,7 @@ export const putRelabelSample = async (req: Request, res: Response) => {
     const labelName = req.query.label as string;
     const label = await Label.findOne({name: labelName, workspaceId: workspace._id}).exec();
     if (!label) {
-        return res.status(400).json("Label with does not exist in the workspace");
+        return res.status(400).json("Label does not exist in the workspace");
     }
     const oldLabel = await Label.findById(sample.labelId).exec();
     oldLabel.sampleCount--;
