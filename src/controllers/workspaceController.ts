@@ -128,6 +128,14 @@ export const putRenameWorkspace = async (req : Request, res : Response) => {
 
 export const deleteWorkspace = async (req : Request, res: Response) => {
     const workspace = res.locals.workspace as IWorkspace;
+    try {
+        await request
+           .post(`${process.env.MODEL_MANAGEMENT_HOST}:${process.env.MODEL_MANAGEMENT_PORT}/api/workspaces/${workspace._id}`)
+           .set("Content-Type", "application/json")
+           .set("Authorization", req.headers.authorization)
+        } catch(err) {
+            return res.status(400).json("Model management could not delete the workspace"); 
+    }
     workspace.remove(); // await ?
     res.sendStatus(200);
 }
