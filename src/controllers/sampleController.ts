@@ -73,8 +73,8 @@ export const postSubmitSample = async (req: Request, res: Response) => {
         return res.status(400).json("This label does not exist");
     }
 
-    const start = body.start;
-    const end = body.end;
+    const start = Math.trunc(body.start);
+    const end = Math.trunc(body.end);
     if (start >= end) {
         return res.status(400).json("Start time cannot be later than end time");
     }
@@ -183,6 +183,12 @@ export const putChangeTimeFrames = async (req: Request, res: Response) => {
     const workspace = res.locals.workspace as IWorkspace;
     const body = req.body as PutChangeTimeFramesBody;
     let timeFrames: ITimeFrame[] = Object.values(body);
+
+    for (let i = 0; i < timeFrames.length; ++i) {
+        timeFrames[i].start = Math.trunc(timeFrames[i].start);
+        timeFrames[i].end = Math.trunc(timeFrames[i].end);
+    }
+
     timeFrames.sort((a, b) => {
         if (a.start === b.start) return a.end - b.end; //this means they're intersecting actually
         return a.start - b.start;
