@@ -90,10 +90,16 @@ export const postSubmitSample = async (req: Request, res: Response) => {
         const sensor = workspace.sensors.find(s => s.sensorType.name === sensorDataPoint.sensor);
         const dataPoints = sensorDataPoint.dataPoints as IDataPoint[];
         const unmatchingFormat = dataPoints.find(d => d.data.length !== sensor.sensorType.dataFormat.length);
+        const invalidTimestamp = dataPoints.find(d => (d.timestamp > end || d.timestamp < start));
         
         if (unmatchingFormat) {
             return res.status(400).json("Data format does not match the sensor's");
         }
+
+        if (invalidTimestamp) {
+            return res.status(400).json("Sample includes data with an erroneous timestamp");
+        }
+
         const formattedSensorDataPoint = {
             sensorId: sensor._id,
             sensorName: sensor.sensorType.name,
