@@ -86,16 +86,17 @@ export const postSubmitSample = async (req: Request, res: Response) => {
     }
     
     let sensorDataPoints : ISensorDataPoints[] = [];
+    const usedSensors : Set<String> = new Set();
     for (const sensorDataPoint of body.sensorDataPoints) {
         const sensor = workspace.sensors.find(s => s.sensorType.name === sensorDataPoint.sensor);
         const dataPoints = sensorDataPoint.dataPoints as IDataPoint[];
         const unmatchingFormat = dataPoints.find(d => d.data.length !== sensor.sensorType.dataFormat.length);
         const invalidTimestamp = dataPoints.find(d => (d.timestamp > end || d.timestamp < start));
         
+        usedSensors.add(sensor.sensorType.name);
         if (unmatchingFormat) {
             return res.status(400).json("Data format does not match the sensor's");
         }
-
         if (invalidTimestamp) {
             return res.status(400).json("Sample includes data with an erroneous timestamp");
         }
@@ -106,6 +107,11 @@ export const postSubmitSample = async (req: Request, res: Response) => {
             dataPoints: dataPoints
         } as ISensorDataPoints
         sensorDataPoints.push(formattedSensorDataPoint);
+    }
+
+    const unusedSensors = workspace.sensors.filter(s => !usedSensors.has(s.sensorType.name));
+    if(unusedSensors.length > 0) {
+        return res.status(400).json("Sample has missing sensor data");
     }
 
     const timeFrame = {
