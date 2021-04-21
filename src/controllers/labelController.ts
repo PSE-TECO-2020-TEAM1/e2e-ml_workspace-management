@@ -83,6 +83,7 @@ export const putRenameLabel = async (req: Request, res: Response) => {
     // label name change invalidates model management cache, improvement possible by using a hidden db that 
     // keeps track of deleted labels, and deletes them only after no model uses the corresponding label.
     workspace.lastModified = new Date();
+    workspace.save();
     res.sendStatus(200);
 }
 
