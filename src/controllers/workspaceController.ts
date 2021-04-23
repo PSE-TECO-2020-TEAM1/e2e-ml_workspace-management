@@ -69,9 +69,11 @@ export const postCreateWorkspace = async (req: Request, res: Response) => {
         if (!sensorType) {
             return res.status(400).json("Invalid sensor type");
         }
-        // can use more clear error messages
-        if (sensorType.maxSamplingRate < sensor.samplingRate || sensor.samplingRate <= 0) {
-            return res.status(400).json("Invalid sensor sampling rate");
+        if (sensorType.maxSamplingRate < sensor.samplingRate) {
+            return res.status(400).json("Sensor sampling rate is greater than maximum allowed: " + sensorType.maxSamplingRate);
+        }
+        if (sensor.samplingRate <= 0) {
+            return res.status(400).json("Sensor sampling rate must be a positive number");
         }
         sensors.push({sensorType:sensorType, samplingRate:sensor.samplingRate});
         formattedSensors.push({
