@@ -32,22 +32,22 @@ export const SensorTypeSchema: Record<keyof SensorType, any> = {
 
 export const ACCELEROMETER: SensorType = {
     name: "Accelerometer",
-    maxSamplingRate: 50,
-    defaultSamplingRate: 25,
+    maxSamplingRate: 100,
+    defaultSamplingRate: 50,
     dataFormat: ['x','y','z']
 } as const
 
 export const GYROSCOPE: SensorType = {
     name: "Gyroscope",
     maxSamplingRate: 100,
-    defaultSamplingRate: 70,
+    defaultSamplingRate: 50,
     dataFormat: ['x','y','z']
 } as const
 
 export const MAGNETOMETER: SensorType = {
     name: "Magnetometer",
-    maxSamplingRate: 250,
-    defaultSamplingRate: 250,
+    maxSamplingRate: 100,
+    defaultSamplingRate: 50,
     dataFormat: ['x','y','z']
 } as const
 
